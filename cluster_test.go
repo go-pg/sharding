@@ -3,6 +3,7 @@ package sharding_test
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -97,10 +98,13 @@ var _ = Describe("Cluster", func() {
 	Describe("ForEachDB", func() {
 		It("fn is called once for every database", func() {
 			var dbs []*pg.DB
+			var mu sync.Mutex
 			err := cluster.ForEachDB(func(db *pg.DB) error {
 				defer GinkgoRecover()
+				mu.Lock()
 				Expect(dbs).NotTo(ContainElement(db))
 				dbs = append(dbs, db)
+				mu.Unlock()
 				return nil
 			})
 			Expect(err).NotTo(HaveOccurred())
@@ -121,10 +125,13 @@ var _ = Describe("Cluster", func() {
 	Describe("ForEachShard", func() {
 		It("fn is called once for every shard", func() {
 			var shards []string
+			var mu sync.Mutex
 			err := cluster.ForEachShard(func(shard *sharding.Shard) error {
 				defer GinkgoRecover()
+				mu.Lock()
 				Expect(shards).NotTo(ContainElement(shard.String()))
 				shards = append(shards, shard.String())
+				mu.Unlock()
 				return nil
 			})
 			Expect(err).NotTo(HaveOccurred())

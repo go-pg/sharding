@@ -6,15 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cactus/go-statsd-client/statsd"
 	"gopkg.in/pg.v3"
 )
-
-var Statter statsd.Statter
-
-func init() {
-	Statter, _ = statsd.NewNoop()
-}
 
 type Shard struct {
 	num    int64
@@ -64,11 +57,7 @@ func (shard *Shard) Exec(q string, args ...interface{}) (*pg.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	start := time.Now()
-	res, err := shard.DB.Exec(q)
-	dur := int64(time.Since(start) / time.Millisecond)
-	Statter.Timing("db.exec", dur, 1)
-	return res, err
+	return shard.DB.Exec(q)
 }
 
 func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
@@ -76,11 +65,7 @@ func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	start := time.Now()
-	res, err := shard.DB.ExecOne(q)
-	dur := int64(time.Since(start) / time.Millisecond)
-	Statter.Timing("db.exec", dur, 1)
-	return res, err
+	return shard.DB.ExecOne(q)
 }
 
 func (shard *Shard) Query(coll pg.Collection, q string, args ...interface{}) (*pg.Result, error) {
@@ -88,11 +73,7 @@ func (shard *Shard) Query(coll pg.Collection, q string, args ...interface{}) (*p
 	if err != nil {
 		return nil, err
 	}
-	start := time.Now()
-	res, err := shard.DB.Query(coll, q)
-	dur := int64(time.Since(start) / time.Millisecond)
-	Statter.Timing("db.query", dur, 1)
-	return res, err
+	return shard.DB.Query(coll, q)
 }
 
 func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) (*pg.Result, error) {
@@ -100,11 +81,7 @@ func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) 
 	if err != nil {
 		return nil, err
 	}
-	start := time.Now()
-	res, err := shard.DB.QueryOne(record, q)
-	dur := int64(time.Since(start) / time.Millisecond)
-	Statter.Timing("db.query", dur, 1)
-	return res, err
+	return shard.DB.QueryOne(record, q)
 }
 
 func (shard *Shard) CopyFrom(r io.Reader, q string, args ...interface{}) (*pg.Result, error) {
