@@ -38,7 +38,7 @@ func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
 		shards: make([]*Shard, nshards),
 	}
 	for i := 0; i < len(cl.shards); i++ {
-		cl.shards[i] = NewShard(int64(i), cl.dbs[i%len(cl.dbs)],
+		cl.shards[i] = newShard(int64(i), cl.dbs[i%len(cl.dbs)],
 			"SHARD_ID", strconv.Itoa(i),
 			"SHARD", "shard"+strconv.Itoa(i),
 		)

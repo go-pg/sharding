@@ -9,28 +9,29 @@ import (
 	"gopkg.in/pg.v3"
 )
 
+// Shard represents logical shard in Cluster.
 type Shard struct {
-	num    int64
+	id     int64
 	DB     *pg.DB
 	oldnew []string
 	repl   *strings.Replacer
 }
 
-func NewShard(num int64, db *pg.DB, oldnew ...string) *Shard {
+func newShard(id int64, db *pg.DB, oldnew ...string) *Shard {
 	return &Shard{
-		num:    num,
+		id:     id,
 		DB:     db,
 		oldnew: oldnew,
 		repl:   strings.NewReplacer(oldnew...),
 	}
 }
 
-func (shard *Shard) Num() int64 {
-	return shard.num
+func (shard *Shard) Id() int64 {
+	return shard.id
 }
 
 func (shard *Shard) Name() string {
-	return "shard" + strconv.FormatInt(shard.num, 10)
+	return "shard" + strconv.FormatInt(shard.id, 10)
 }
 
 func (shard *Shard) String() string {
