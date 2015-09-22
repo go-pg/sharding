@@ -17,7 +17,7 @@ type Shard struct {
 	repl   *strings.Replacer
 }
 
-func newShard(id int64, db *pg.DB, oldnew ...string) *Shard {
+func NewShard(id int64, db *pg.DB, oldnew ...string) *Shard {
 	return &Shard{
 		id:     id,
 		DB:     db,
