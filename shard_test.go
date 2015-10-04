@@ -27,7 +27,7 @@ var _ = Describe("Shard", func() {
 	})
 
 	It("supports SHARD", func() {
-		_, err := shard.Exec(`DROP SCHEMA IF EXISTS SHARD`)
+		_, err := shard.Exec(`DROP SCHEMA IF EXISTS SHARD CASCADE`)
 		Expect(err).NotTo(HaveOccurred())
 
 		_, err = shard.Exec(`CREATE SCHEMA SHARD`)
