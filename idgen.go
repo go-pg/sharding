@@ -1,5 +1,3 @@
-// http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram
-
 package sharding
 
 import (
