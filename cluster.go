@@ -72,6 +72,13 @@ func (cl *Cluster) Shard(id int64) *Shard {
 	return cl.shards[n]
 }
 
+// SplitShard uses SplitId to extract shard id from the id and then
+// returns corresponding cluster Shard.
+func (cl *Cluster) SplitShard(id int64) *Shard {
+	_, shardId, _ := SplitId(id)
+	return cl.Shard(shardId)
+}
+
 // ForEachDB concurrently calls the fn on each database in the cluster.
 func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 	errCh := make(chan error, len(cl.dbs))

@@ -1,16 +1,3 @@
-# PostgreSQL sharding for go-pg and Golang [![Build Status](https://travis-ci.org/go-pg/sharding.svg)](https://travis-ci.org/go-pg/sharding)
-
-PostgreSQL client that helps sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram).
-
-## Installation
-
-To install:
-
-    go get gopkg.in/go-pg/sharding.v1
-
-## Quickstart
-
-```go
 package sharding_test
 
 import (
@@ -180,4 +167,3 @@ END;
 $$
 LANGUAGE plpgsql;
 `
-```
