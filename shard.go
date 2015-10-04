@@ -9,7 +9,11 @@ import (
 	"gopkg.in/pg.v3"
 )
 
-// Shard represents logical shard in Cluster.
+// Shard represents logical shard in Cluster and is responsible for
+// executing queries against the shard. Shard provides go-pg
+// compatible API and replaces following patterns in the query:
+// - SHARD is replaced with shard name, e.g. shard1234.
+// - SHARD_ID is replaced with shard id, .e.g. 1234.
 type Shard struct {
 	id     int64
 	DB     *pg.DB
@@ -38,10 +42,22 @@ func (shard *Shard) String() string {
 	return shard.Name()
 }
 
+// UseTimeout is an alias for pg.DB.UseTimeout.
 func (shard *Shard) UseTimeout(d time.Duration) *Shard {
 	newShard := *shard
 	newShard.DB = shard.DB.UseTimeout(d)
 	return &newShard
+}
+
+// Conn is an alias for pg.DB.Conn.
+func (shard *Shard) Conn() (*Shard, error) {
+	newShard := *shard
+	db, err := shard.DB.Conn()
+	if err != nil {
+		return nil, err
+	}
+	newShard.DB = db
+	return &newShard, nil
 }
 
 func (shard *Shard) replaceVars(q string, args []interface{}) (string, error) {
@@ -53,6 +69,7 @@ func (shard *Shard) replaceVars(q string, args []interface{}) (string, error) {
 	return q, nil
 }
 
+// Exec is an alias for pg.DB.Exec.
 func (shard *Shard) Exec(q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
@@ -61,6 +78,7 @@ func (shard *Shard) Exec(q string, args ...interface{}) (*pg.Result, error) {
 	return shard.DB.Exec(q)
 }
 
+// ExecOne is an alias for pg.DB.ExecOne.
 func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
@@ -69,6 +87,7 @@ func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 	return shard.DB.ExecOne(q)
 }
 
+// Query is an alias for pg.DB.Query.
 func (shard *Shard) Query(coll pg.Collection, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
@@ -77,6 +96,7 @@ func (shard *Shard) Query(coll pg.Collection, q string, args ...interface{}) (*p
 	return shard.DB.Query(coll, q)
 }
 
+// QueryOne is an alias for pg.DB.QueryOne.
 func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
@@ -85,6 +105,7 @@ func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) 
 	return shard.DB.QueryOne(record, q)
 }
 
+// CopyFrom is an alias for pg.DB.CopyFrom.
 func (shard *Shard) CopyFrom(r io.Reader, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
@@ -93,6 +114,7 @@ func (shard *Shard) CopyFrom(r io.Reader, q string, args ...interface{}) (*pg.Re
 	return shard.DB.CopyFrom(r, q)
 }
 
+// CopyTo is an alias for pg.DB.CopyTo.
 func (shard *Shard) CopyTo(w io.WriteCloser, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
@@ -101,11 +123,13 @@ func (shard *Shard) CopyTo(w io.WriteCloser, q string, args ...interface{}) (*pg
 	return shard.DB.CopyTo(w, q)
 }
 
+// Tx is an alias for pg.Tx and provides same API.
 type Tx struct {
 	shard *Shard
 	Tx    *pg.Tx
 }
 
+// Begin is an alias for pg.DB.Begin.
 func (shard *Shard) Begin() (*Tx, error) {
 	tx, err := shard.DB.Begin()
 	if err != nil {
@@ -117,14 +141,17 @@ func (shard *Shard) Begin() (*Tx, error) {
 	}, nil
 }
 
+// Commit is an alias for pg.Tx.Commit.
 func (tx *Tx) Commit() error {
 	return tx.Tx.Commit()
 }
 
+// Rollback is an alias for pg.Tx.Rollback.
 func (tx *Tx) Rollback() error {
 	return tx.Tx.Rollback()
 }
 
+// Exec is an alias for pg.Tx.Exec.
 func (tx *Tx) Exec(q string, args ...interface{}) (*pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
@@ -133,6 +160,7 @@ func (tx *Tx) Exec(q string, args ...interface{}) (*pg.Result, error) {
 	return tx.Tx.Exec(q)
 }
 
+// ExecOne is an alias for pg.Tx.ExecOne.
 func (tx *Tx) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
@@ -141,6 +169,7 @@ func (tx *Tx) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 	return tx.Tx.ExecOne(q)
 }
 
+// Query is an alias for pg.Tx.Query.
 func (tx *Tx) Query(coll pg.Collection, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
@@ -149,6 +178,7 @@ func (tx *Tx) Query(coll pg.Collection, q string, args ...interface{}) (*pg.Resu
 	return tx.Tx.Query(coll, q)
 }
 
+// QueryOne is an alias for pg.Tx.QueryOne.
 func (tx *Tx) QueryOne(record interface{}, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {

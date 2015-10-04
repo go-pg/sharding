@@ -36,7 +36,7 @@ func TestSequence(t *testing.T) {
 	}
 }
 
-func TestSharding(t *testing.T) {
+func TestIdGen(t *testing.T) {
 	N := 50000
 	tm := time.Now()
 

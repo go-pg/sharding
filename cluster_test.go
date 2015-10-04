@@ -13,7 +13,7 @@ import (
 	"gopkg.in/go-pg/sharding.v1"
 )
 
-func TestHandlers(t *testing.T) {
+func TestSharding(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "sharding")
 }
