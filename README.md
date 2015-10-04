@@ -2,6 +2,9 @@
 
 PostgreSQL client that helps sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram).
 
+API docs: http://godoc.org/gopkg.in/go-pg/sharding.v1.
+Examples: http://godoc.org/gopkg.in/go-pg/sharding.v1#pkg-examples.
+
 ## Installation
 
 To install:
