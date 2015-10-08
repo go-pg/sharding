@@ -1,6 +1,6 @@
 # PostgreSQL sharding for go-pg and Golang [![Build Status](https://travis-ci.org/go-pg/sharding.svg)](https://travis-ci.org/go-pg/sharding)
 
-This package implements a PostgreSQL client that helps sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram). In 2 words it maps many (2048-8192) logical shards implemented using PostgreSQL schemas to far fewer physical PostgreSQL servers.
+This package uses a [go-pg PostgreSQL client](https://github.com/go-pg/pg) to help sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram). In 2 words it maps many (2048-8192) logical shards implemented using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 
 API docs: http://godoc.org/gopkg.in/go-pg/sharding.v1.
 Examples: http://godoc.org/gopkg.in/go-pg/sharding.v1#pkg-examples.
@@ -195,3 +195,7 @@ $$
 LANGUAGE plpgsql;
 `
 ```
+
+## Howto
+
+Please use (go-pg docs)[https://github.com/go-pg/pg] to get the idea how to use this package.
