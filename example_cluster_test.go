@@ -20,17 +20,21 @@ func (u User) String() string {
 	return u.Name
 }
 
+// go-pg users collection.
 type Users struct {
 	C []User
 }
 
-var _ pg.Collection = &Users{}
+// Implements pg.Collection.
+var _ pg.Collection = (*Users)(nil)
 
+// NewRecord returns new user and is used by go-pg to load multiple users.
 func (users *Users) NewRecord() interface{} {
 	users.C = append(users.C, User{})
 	return &users.C[len(users.C)-1]
 }
 
+// CreateUser picks shard by account id and creates user in the shard.
 func CreateUser(cluster *sharding.Cluster, user *User) error {
 	_, err := cluster.Shard(user.AccountId).QueryOne(user, `
 		INSERT INTO SHARD.users (name, account_id, emails)
@@ -40,6 +44,7 @@ func CreateUser(cluster *sharding.Cluster, user *User) error {
 	return err
 }
 
+// GetUser splits shard from user id and fetches user from the shard.
 func GetUser(cluster *sharding.Cluster, id int64) (*User, error) {
 	var user User
 	_, err := cluster.SplitShard(id).QueryOne(&user, `
@@ -48,6 +53,7 @@ func GetUser(cluster *sharding.Cluster, id int64) (*User, error) {
 	return &user, err
 }
 
+// GetUsers picks shard by account id and fetches users from the shard.
 func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 	var users Users
 	_, err := cluster.Shard(accountId).Query(&users, `
@@ -56,6 +62,7 @@ func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 	return users.C, err
 }
 
+// createShard creates database schema for a given shard.
 func createShard(shard *sharding.Shard) error {
 	queries := []string{
 		`DROP SCHEMA IF EXISTS SHARD CASCADE`,
@@ -79,17 +86,19 @@ func ExampleCluster() {
 		User: "postgres",
 	})
 
-	dbs := []*pg.DB{db} // physical PostgreSQL servers
+	dbs := []*pg.DB{db} // list of physical PostgreSQL servers
 	nshards := 2        // 2 logical shards
 	// Create cluster with 1 physical server and 2 logical shards.
 	cluster := sharding.NewCluster(dbs, nshards)
 
+	// Create database schema for our logical shards.
 	for i := 0; i < nshards; i++ {
 		if err := createShard(cluster.Shard(int64(i))); err != nil {
 			panic(err)
 		}
 	}
 
+	// user1 will be created in shard1 because AccountId % nshards = shard1.
 	user1 := &User{
 		Name:      "user1",
 		AccountId: 1,
@@ -100,6 +109,7 @@ func ExampleCluster() {
 		panic(err)
 	}
 
+	// user2 will be created in shard1 too AccountId is the same.
 	user2 := &User{
 		Name:      "user2",
 		AccountId: 1,
@@ -110,6 +120,7 @@ func ExampleCluster() {
 		panic(err)
 	}
 
+	// user3 will be created in shard0 because AccountId % nshards = shard0.
 	user3 := &User{
 		Name:      "user3",
 		AccountId: 2,

@@ -8,8 +8,8 @@ import (
 	"gopkg.in/pg.v3"
 )
 
-// Cluster maps many (up to 2048) logical database shards to far fewer
-// physical PostgreSQL server instances.
+// Cluster maps many (up to 8198) logical database shards implemented
+// using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
 	dbs    []*pg.DB
 	shards []*Shard
