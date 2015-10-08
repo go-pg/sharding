@@ -198,4 +198,4 @@ LANGUAGE plpgsql;
 
 ## Howto
 
-Please use (go-pg docs)[https://github.com/go-pg/pg] to get the idea how to use this package.
+Please use [go-pg docs](https://github.com/go-pg/pg) to get the idea how to use this package.
