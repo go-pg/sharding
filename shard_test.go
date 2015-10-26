@@ -13,8 +13,7 @@ var _ = Describe("Shard", func() {
 
 	BeforeEach(func() {
 		db := pg.Connect(&pg.Options{
-			User:     "postgres",
-			Database: "test",
+			User: "postgres",
 		})
 		shard = sharding.NewShard(0, db, "SHARD_ID", "1234", "SHARD", "shard1234")
 	})
