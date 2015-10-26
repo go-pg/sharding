@@ -49,17 +49,6 @@ func (shard *Shard) UseTimeout(d time.Duration) *Shard {
 	return &newShard
 }
 
-// Conn is an alias for pg.DB.Conn.
-func (shard *Shard) Conn() (*Shard, error) {
-	newShard := *shard
-	db, err := shard.DB.Conn()
-	if err != nil {
-		return nil, err
-	}
-	newShard.DB = db
-	return &newShard, nil
-}
-
 func (shard *Shard) replaceVars(q string, args []interface{}) (string, error) {
 	fq, err := pg.FormatQ(q, args...)
 	if err != nil {
@@ -88,7 +77,7 @@ func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 }
 
 // Query is an alias for pg.DB.Query.
-func (shard *Shard) Query(coll pg.Collection, q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) Query(coll interface{}, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
