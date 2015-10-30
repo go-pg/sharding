@@ -159,7 +159,7 @@ func (tx *Tx) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 }
 
 // Query is an alias for pg.Tx.Query.
-func (tx *Tx) Query(coll pg.Collection, q string, args ...interface{}) (*pg.Result, error) {
+func (tx *Tx) Query(coll interface{}, q string, args ...interface{}) (*pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
