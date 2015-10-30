@@ -11,8 +11,8 @@ import (
 // Cluster maps many (up to 8198) logical database shards implemented
 // using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
-	dbs    []*pg.DB
-	shards []*Shard
+	dbs, servers []*pg.DB
+	shards       []*Shard
 }
 
 // NewCluster returns new PostgreSQL cluster consisting of physical
@@ -37,18 +37,31 @@ func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
 		dbs:    dbs,
 		shards: make([]*Shard, nshards),
 	}
+	cl.init()
+	return cl
+}
+
+func (cl *Cluster) init() {
+	dbSet := make(map[*pg.DB]struct{})
+	for _, db := range cl.dbs {
+		if _, ok := dbSet[db]; ok {
+			continue
+		}
+		dbSet[db] = struct{}{}
+		cl.servers = append(cl.servers, db)
+	}
+
 	for i := 0; i < len(cl.shards); i++ {
 		cl.shards[i] = NewShard(int64(i), cl.dbs[i%len(cl.dbs)],
 			"SHARD_ID", strconv.Itoa(i),
 			"SHARD", "shard"+strconv.Itoa(i),
 		)
 	}
-	return cl
 }
 
-// DBs returns list of databases in the cluster.
+// DBs returns list of unique databases in the cluster.
 func (cl *Cluster) DBs() []*pg.DB {
-	return cl.dbs
+	return cl.servers
 }
 
 // Shards returns list of shards running in the db. If db is nil all
@@ -83,14 +96,8 @@ func (cl *Cluster) SplitShard(id int64) *Shard {
 func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 	errCh := make(chan error, len(cl.dbs))
 	var wg sync.WaitGroup
-	dbSet := make(map[*pg.DB]struct{})
-	for _, db := range cl.dbs {
-		if _, ok := dbSet[db]; ok {
-			continue
-		}
-		dbSet[db] = struct{}{}
-
-		wg.Add(1)
+	wg.Add(len(cl.servers))
+	for _, db := range cl.servers {
 		go func(db *pg.DB) {
 			defer wg.Done()
 			if err := fn(db); err != nil {
