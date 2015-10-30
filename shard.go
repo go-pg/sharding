@@ -42,10 +42,10 @@ func (shard *Shard) String() string {
 	return shard.Name()
 }
 
-// UseTimeout is an alias for pg.DB.UseTimeout.
+// WithTimeout is an alias for pg.DB.WithTimeout.
 func (shard *Shard) UseTimeout(d time.Duration) *Shard {
 	newShard := *shard
-	newShard.DB = shard.DB.UseTimeout(d)
+	newShard.DB = shard.DB.WithTimeout(d)
 	return &newShard
 }
 
