@@ -59,7 +59,7 @@ func (shard *Shard) replaceVars(q string, args []interface{}) (string, error) {
 }
 
 // Exec is an alias for pg.DB.Exec.
-func (shard *Shard) Exec(q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) Exec(q string, args ...interface{}) (pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (shard *Shard) Exec(q string, args ...interface{}) (*pg.Result, error) {
 }
 
 // ExecOne is an alias for pg.DB.ExecOne.
-func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) ExecOne(q string, args ...interface{}) (pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (shard *Shard) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 }
 
 // Query is an alias for pg.DB.Query.
-func (shard *Shard) Query(coll interface{}, q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) Query(coll interface{}, q string, args ...interface{}) (pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (shard *Shard) Query(coll interface{}, q string, args ...interface{}) (*pg.
 }
 
 // QueryOne is an alias for pg.DB.QueryOne.
-func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) (pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (shard *Shard) QueryOne(record interface{}, q string, args ...interface{}) 
 }
 
 // CopyFrom is an alias for pg.DB.CopyFrom.
-func (shard *Shard) CopyFrom(r io.Reader, q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) CopyFrom(r io.Reader, q string, args ...interface{}) (pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (shard *Shard) CopyFrom(r io.Reader, q string, args ...interface{}) (*pg.Re
 }
 
 // CopyTo is an alias for pg.DB.CopyTo.
-func (shard *Shard) CopyTo(w io.WriteCloser, q string, args ...interface{}) (*pg.Result, error) {
+func (shard *Shard) CopyTo(w io.WriteCloser, q string, args ...interface{}) (pg.Result, error) {
 	q, err := shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (tx *Tx) Rollback() error {
 }
 
 // Exec is an alias for pg.Tx.Exec.
-func (tx *Tx) Exec(q string, args ...interface{}) (*pg.Result, error) {
+func (tx *Tx) Exec(q string, args ...interface{}) (pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (tx *Tx) Exec(q string, args ...interface{}) (*pg.Result, error) {
 }
 
 // ExecOne is an alias for pg.Tx.ExecOne.
-func (tx *Tx) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
+func (tx *Tx) ExecOne(q string, args ...interface{}) (pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -159,7 +159,7 @@ func (tx *Tx) ExecOne(q string, args ...interface{}) (*pg.Result, error) {
 }
 
 // Query is an alias for pg.Tx.Query.
-func (tx *Tx) Query(coll interface{}, q string, args ...interface{}) (*pg.Result, error) {
+func (tx *Tx) Query(coll interface{}, q string, args ...interface{}) (pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (tx *Tx) Query(coll interface{}, q string, args ...interface{}) (*pg.Result
 }
 
 // QueryOne is an alias for pg.Tx.QueryOne.
-func (tx *Tx) QueryOne(record interface{}, q string, args ...interface{}) (*pg.Result, error) {
+func (tx *Tx) QueryOne(record interface{}, q string, args ...interface{}) (pg.Result, error) {
 	q, err := tx.shard.replaceVars(q, args)
 	if err != nil {
 		return nil, err
