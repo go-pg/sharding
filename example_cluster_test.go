@@ -3,8 +3,8 @@ package sharding_test
 import (
 	"fmt"
 
-	"gopkg.in/go-pg/sharding.v1"
-	"gopkg.in/pg.v3"
+	"gopkg.in/go-pg/sharding.v4"
+	"gopkg.in/pg.v4"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are
@@ -18,20 +18,6 @@ type User struct {
 
 func (u User) String() string {
 	return u.Name
-}
-
-// go-pg users collection.
-type Users struct {
-	C []User
-}
-
-// Implements pg.Collection.
-var _ pg.Collection = (*Users)(nil)
-
-// NewRecord returns new user and is used by go-pg to load multiple users.
-func (users *Users) NewRecord() interface{} {
-	users.C = append(users.C, User{})
-	return &users.C[len(users.C)-1]
 }
 
 // CreateUser picks shard by account id and creates user in the shard.
@@ -55,11 +41,11 @@ func GetUser(cluster *sharding.Cluster, id int64) (*User, error) {
 
 // GetUsers picks shard by account id and fetches users from the shard.
 func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
-	var users Users
+	var users []User
 	_, err := cluster.Shard(accountId).Query(&users, `
 		SELECT * FROM SHARD.users WHERE account_id = ?
 	`, accountId)
-	return users.C, err
+	return users, err
 }
 
 // createShard creates database schema for a given shard.
@@ -68,7 +54,7 @@ func createShard(shard *sharding.Shard) error {
 		`DROP SCHEMA IF EXISTS SHARD CASCADE`,
 		`CREATE SCHEMA SHARD`,
 		sqlFuncs,
-		`CREATE TABLE SHARD.users (id bigint DEFAULT SHARD.next_id(), account_id int, name text, emails text[])`,
+		`CREATE TABLE SHARD.users (id bigint DEFAULT SHARD.next_id(), account_id int, name text, emails jsonb)`,
 	}
 
 	for _, q := range queries {
