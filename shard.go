@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gopkg.in/pg.v4"
+	"gopkg.in/pg.v4/orm"
 	"gopkg.in/pg.v4/types"
 )
 
@@ -52,16 +53,22 @@ func (shard *Shard) UseTimeout(d time.Duration) *Shard {
 }
 
 func (shard *Shard) replaceVars(query interface{}, params []interface{}) (string, error) {
-	var q types.Q
-	var err error
+	var q string
 	switch query := query.(type) {
 	case string:
-		q, err = pg.FormatQuery(query, params...)
+		b, err := orm.FormatQuery(query, params...)
+		if err != nil {
+			return "", err
+		}
+		q = string(b)
+	case orm.QueryAppender:
+		b, err := query.AppendQuery(nil, params...)
+		if err != nil {
+			return "", err
+		}
+		q = string(b)
 	default:
 		return "", fmt.Errorf("unsupported query type: %T", query)
-	}
-	if err != nil {
-		return "", err
 	}
 	return shard.repl.Replace(string(q)), nil
 }
@@ -100,6 +107,22 @@ func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (t
 		return nil, err
 	}
 	return shard.DB.QueryOne(model, q)
+}
+
+func (shard *Shard) Model(model interface{}) *orm.Query {
+	return orm.NewQuery(shard, model)
+}
+
+func (shard *Shard) Create(model interface{}) error {
+	return orm.Create(shard, model)
+}
+
+func (shard *Shard) Update(model interface{}) error {
+	return orm.Update(shard, model)
+}
+
+func (shard *Shard) Delete(model interface{}) error {
+	return orm.Delete(shard, model)
 }
 
 // CopyFrom is an alias for pg.DB.CopyFrom.
