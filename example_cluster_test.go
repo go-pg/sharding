@@ -10,6 +10,8 @@ import (
 // Users are sharded by AccountId, i.e. users with same account id are
 // placed on same shard.
 type User struct {
+	TableName string `sql:"SHARD.users"`
+
 	Id        int64
 	AccountId int64
 	Name      string
@@ -22,29 +24,20 @@ func (u User) String() string {
 
 // CreateUser picks shard by account id and creates user in the shard.
 func CreateUser(cluster *sharding.Cluster, user *User) error {
-	_, err := cluster.Shard(user.AccountId).QueryOne(user, `
-		INSERT INTO SHARD.users (name, account_id, emails)
-		VALUES (?name, ?account_id, ?emails)
-		RETURNING id
-	`, user)
-	return err
+	return cluster.Shard(user.AccountId).Create(user)
 }
 
 // GetUser splits shard from user id and fetches user from the shard.
 func GetUser(cluster *sharding.Cluster, id int64) (*User, error) {
 	var user User
-	_, err := cluster.SplitShard(id).QueryOne(&user, `
-		SELECT * FROM SHARD.users WHERE id = ?
-	`, id)
+	err := cluster.SplitShard(id).Model(&user).Where("id = ?", id).Select()
 	return &user, err
 }
 
 // GetUsers picks shard by account id and fetches users from the shard.
 func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 	var users []User
-	_, err := cluster.Shard(accountId).Query(&users, `
-		SELECT * FROM SHARD.users WHERE account_id = ?
-	`, accountId)
+	err := cluster.Shard(accountId).Model(&users).Where("account_id = ?", accountId).Select()
 	return users, err
 }
 
