@@ -1,11 +1,11 @@
-package sharding // import "gopkg.in/go-pg/sharding.v1"
+package sharding // import "gopkg.in/go-pg/sharding.v4"
 
 import (
 	"fmt"
 	"strconv"
 	"sync"
 
-	"gopkg.in/pg.v3"
+	"gopkg.in/pg.v4"
 )
 
 // Cluster maps many (up to 8198) logical database shards implemented

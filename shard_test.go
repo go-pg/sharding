@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"gopkg.in/go-pg/sharding.v1"
-	"gopkg.in/pg.v3"
+	"gopkg.in/go-pg/sharding.v4"
+	"gopkg.in/pg.v4"
 )
 
 var _ = Describe("Shard", func() {
@@ -20,7 +20,7 @@ var _ = Describe("Shard", func() {
 
 	It("supports SHARD_ID", func() {
 		var shardId int
-		_, err := shard.QueryOne(pg.LoadInto(&shardId), `SELECT SHARD_ID`)
+		_, err := shard.QueryOne(pg.Scan(&shardId), `SELECT SHARD_ID`)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardId).To(Equal(1234))
 	})
@@ -39,7 +39,7 @@ var _ = Describe("Shard", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		var count int
-		_, err = shard.QueryOne(pg.LoadInto(&count), `SELECT count(*) FROM shard1234.my_table`)
+		_, err = shard.QueryOne(pg.Scan(&count), `SELECT count(*) FROM shard1234.my_table`)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(count).To(Equal(0))
 	})

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/go-pg/sharding.v1"
+	"gopkg.in/go-pg/sharding.v4"
 )
 
 func TestTime(t *testing.T) {
