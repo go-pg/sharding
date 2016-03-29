@@ -19,16 +19,19 @@ var _ = Describe("Shard", func() {
 	})
 
 	It("supports ?shard", func() {
-		var shardName string
-		_, err := shard.QueryOne(pg.Scan(&shardName), `SELECT '?shard'`)
+		var shardName, hello string
+		_, err := shard.QueryOne(pg.Scan(&shardName, &hello), `SELECT '?shard', ?`, "hello")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardName).To(Equal(`"shard1234"`))
+		Expect(hello).To(Equal("hello"))
 	})
 
 	It("supports ?shard_id", func() {
 		var shardId int
-		_, err := shard.QueryOne(pg.Scan(&shardId), `SELECT ?shard_id`)
+		var hello string
+		_, err := shard.QueryOne(pg.Scan(&shardId, &hello), `SELECT ?shard_id, ?`, "hello")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardId).To(Equal(1234))
+		Expect(hello).To(Equal("hello"))
 	})
 })

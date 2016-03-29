@@ -13,8 +13,8 @@ import (
 // Shard represents logical shard in Cluster and is responsible for
 // executing queries against the shard. Shard provides go-pg
 // compatible API and replaces following patterns in the query:
-// - SHARD is replaced with shard name, e.g. shard1234.
-// - SHARD_ID is replaced with shard id, .e.g. 1234.
+// - ?shard is replaced with shard name, e.g. shard1234.
+// - ?shard_id is replaced with shard id, .e.g. 1234.
 type Shard struct {
 	id  int
 	DB  *pg.DB
@@ -56,7 +56,7 @@ func (shard *Shard) Exec(query interface{}, params ...interface{}) (types.Result
 		query: query,
 		fmt:   shard.fmt,
 	}
-	return shard.DB.Exec(q)
+	return shard.DB.Exec(q, params...)
 }
 
 // ExecOne is an alias for pg.DB.ExecOne.
@@ -65,7 +65,7 @@ func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (types.Res
 		query: query,
 		fmt:   shard.fmt,
 	}
-	return shard.DB.ExecOne(q)
+	return shard.DB.ExecOne(q, params...)
 }
 
 // Query is an alias for pg.DB.Query.
@@ -74,7 +74,7 @@ func (shard *Shard) Query(model, query interface{}, params ...interface{}) (type
 		query: query,
 		fmt:   shard.fmt,
 	}
-	return shard.DB.Query(model, q)
+	return shard.DB.Query(model, q, params...)
 }
 
 // QueryOne is an alias for pg.DB.QueryOne.
@@ -83,7 +83,7 @@ func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (t
 		query: query,
 		fmt:   shard.fmt,
 	}
-	return shard.DB.QueryOne(model, q)
+	return shard.DB.QueryOne(model, q, params...)
 }
 
 func (shard *Shard) Model(model interface{}) *orm.Query {
@@ -108,7 +108,7 @@ func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface
 		query: query,
 		fmt:   shard.fmt,
 	}
-	return shard.DB.CopyFrom(r, q)
+	return shard.DB.CopyFrom(r, q, params...)
 }
 
 // CopyTo is an alias for pg.DB.CopyTo.
@@ -117,7 +117,7 @@ func (shard *Shard) CopyTo(w io.WriteCloser, query interface{}, params ...interf
 		query: query,
 		fmt:   shard.fmt,
 	}
-	return shard.DB.CopyTo(w, q)
+	return shard.DB.CopyTo(w, q, params...)
 }
 
 // Tx is an alias for pg.Tx and provides same API.
@@ -154,7 +154,7 @@ func (tx *Tx) Exec(query interface{}, params ...interface{}) (types.Result, erro
 		query: query,
 		fmt:   tx.shard.fmt,
 	}
-	return tx.Tx.Exec(q)
+	return tx.Tx.Exec(q, params...)
 }
 
 // ExecOne is an alias for pg.Tx.ExecOne.
@@ -163,7 +163,7 @@ func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (types.Result, e
 		query: query,
 		fmt:   tx.shard.fmt,
 	}
-	return tx.Tx.ExecOne(q)
+	return tx.Tx.ExecOne(q, params...)
 }
 
 // Query is an alias for pg.Tx.Query.
@@ -172,7 +172,7 @@ func (tx *Tx) Query(model, query interface{}, params ...interface{}) (types.Resu
 		query: query,
 		fmt:   tx.shard.fmt,
 	}
-	return tx.Tx.Query(model, q)
+	return tx.Tx.Query(model, q, params...)
 }
 
 // QueryOne is an alias for pg.Tx.QueryOne.
@@ -181,5 +181,5 @@ func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (types.R
 		query: query,
 		fmt:   tx.shard.fmt,
 	}
-	return tx.Tx.QueryOne(model, q)
+	return tx.Tx.QueryOne(model, q, params...)
 }
