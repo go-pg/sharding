@@ -16,12 +16,12 @@ import (
 // - ?shard is replaced with shard name, e.g. shard1234.
 // - ?shard_id is replaced with shard id, .e.g. 1234.
 type Shard struct {
-	id    int
+	id    int64
 	DB    *pg.DB
 	Fmter orm.Formatter
 }
 
-func NewShard(id int, db *pg.DB) *Shard {
+func NewShard(id int64, db *pg.DB) *Shard {
 	shard := &Shard{
 		id: id,
 		DB: db,
@@ -31,12 +31,12 @@ func NewShard(id int, db *pg.DB) *Shard {
 	return shard
 }
 
-func (shard *Shard) Id() int {
+func (shard *Shard) Id() int64 {
 	return shard.id
 }
 
 func (shard *Shard) Name() string {
-	return "shard" + strconv.Itoa(shard.id)
+	return "shard" + strconv.FormatInt(shard.id, 10)
 }
 
 func (shard *Shard) String() string {

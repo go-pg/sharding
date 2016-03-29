@@ -51,7 +51,7 @@ func (cl *Cluster) init() {
 	}
 
 	for i := 0; i < len(cl.shards); i++ {
-		cl.shards[i] = NewShard(i, cl.dbs[i%len(cl.dbs)])
+		cl.shards[i] = NewShard(int64(i), cl.dbs[i%len(cl.dbs)])
 	}
 }
 
