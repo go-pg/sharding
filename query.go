@@ -15,7 +15,7 @@ var buffers = sync.Pool{
 
 type shardQuery struct {
 	query interface{}
-	fmt   orm.Formatter
+	fmter orm.Formatter
 }
 
 func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, error) {
@@ -36,5 +36,5 @@ func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, erro
 		return nil, fmt.Errorf("unsupported query type: %T", query)
 	}
 
-	return q.fmt.AppendBytes(dst, b, params...)
+	return q.fmter.AppendBytes(dst, b, params...)
 }
