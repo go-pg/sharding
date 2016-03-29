@@ -22,4 +22,4 @@ install:
   - go get github.com/onsi/ginkgo
   - go get github.com/onsi/gomega
   - mkdir -p $HOME/gopath/src/gopkg.in/go-pg
-  - ln -s `pwd` $HOME/gopath/src/gopkg.in/go-pg/sharding.v4
+  - mv `pwd` $HOME/gopath/src/gopkg.in/go-pg/sharding.v4
