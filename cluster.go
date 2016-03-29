@@ -2,7 +2,6 @@ package sharding // import "gopkg.in/go-pg/sharding.v4"
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
 
 	"gopkg.in/pg.v4"
@@ -52,11 +51,18 @@ func (cl *Cluster) init() {
 	}
 
 	for i := 0; i < len(cl.shards); i++ {
-		cl.shards[i] = NewShard(int64(i), cl.dbs[i%len(cl.dbs)],
-			"SHARD_ID", strconv.Itoa(i),
-			"SHARD", "shard"+strconv.Itoa(i),
-		)
+		cl.shards[i] = NewShard(i, cl.dbs[i%len(cl.dbs)])
 	}
+}
+
+func (cl *Cluster) Close() error {
+	var retErr error
+	for _, db := range cl.servers {
+		if err := db.Close(); err != nil && retErr == nil {
+			retErr = err
+		}
+	}
+	return retErr
 }
 
 // DBs returns list of unique databases in the cluster.

@@ -24,20 +24,24 @@ var _ = Describe("Cluster", func() {
 
 	BeforeEach(func() {
 		db1 = pg.Connect(&pg.Options{
-			Host: "db1",
+			Addr: "db1",
 		})
 		db2 = pg.Connect(&pg.Options{
-			Host: "db2",
+			Addr: "db2",
 		})
 		Expect(db1).NotTo(Equal(db2))
 		cluster = sharding.NewCluster([]*pg.DB{db1, db2, db1, db2}, 4)
+	})
+
+	AfterEach(func() {
+		Expect(cluster.Close()).NotTo(HaveOccurred())
 	})
 
 	It("distributes shards on servers", func() {
 		var dbs []*pg.DB
 		for i := 0; i < 16; i++ {
 			db := pg.Connect(&pg.Options{
-				Host: fmt.Sprintf("db%d", i),
+				Addr: fmt.Sprintf("db%d", i),
 			})
 			dbs = append(dbs, db)
 		}
