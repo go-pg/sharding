@@ -26,7 +26,7 @@ func NewShard(id int64, db *pg.DB) *Shard {
 		id: id,
 		DB: db,
 	}
-	shard.Fmter.SetParam("shard", pg.F(shard.Name()))
+	shard.Fmter.SetParam("shard", pg.Q(shard.Name()))
 	shard.Fmter.SetParam("shard_id", shard.Id())
 	return shard
 }
