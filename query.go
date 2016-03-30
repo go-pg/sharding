@@ -22,13 +22,12 @@ func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, erro
 	b := buffers.Get().([]byte)
 	defer buffers.Put(b)
 
-	b = b[:0]
 	switch query := q.query.(type) {
 	case string:
-		b = append(b, query...)
+		b = append(b[:0], query...)
 	case orm.QueryAppender:
 		var err error
-		b, err = query.AppendQuery(b)
+		b, err = query.AppendQuery(b[:0])
 		if err != nil {
 			return nil, err
 		}
@@ -36,5 +35,5 @@ func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, erro
 		return nil, fmt.Errorf("unsupported query type: %T", query)
 	}
 
-	return q.fmter.AppendBytes(dst, b, params...)
+	return q.fmter.AppendBytes(dst, b, params...), nil
 }
