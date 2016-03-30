@@ -22,7 +22,7 @@ var _ = Describe("Shard", func() {
 		var shardName, hello string
 		_, err := shard.QueryOne(pg.Scan(&shardName, &hello), `SELECT '?shard', ?`, "hello")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(shardName).To(Equal(`"shard1234"`))
+		Expect(shardName).To(Equal(`shard1234`))
 		Expect(hello).To(Equal("hello"))
 	})
 
