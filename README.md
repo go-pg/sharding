@@ -2,14 +2,14 @@
 
 This package uses a [go-pg PostgreSQL client](https://github.com/go-pg/pg) to help sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram). In 2 words it maps many (2048-8192) logical shards implemented using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 
-API docs: http://godoc.org/gopkg.in/go-pg/sharding.v1.
-Examples: http://godoc.org/gopkg.in/go-pg/sharding.v1#pkg-examples.
+API docs: http://godoc.org/gopkg.in/go-pg/sharding.v4.
+Examples: http://godoc.org/gopkg.in/go-pg/sharding.v4#pkg-examples.
 
 ## Installation
 
 To install:
 
-    go get gopkg.in/go-pg/sharding.v1
+    go get gopkg.in/go-pg/sharding.v4
 
 ## Quickstart
 
@@ -26,7 +26,7 @@ import (
 // Users are sharded by AccountId, i.e. users with same account id are
 // placed on same shard.
 type User struct {
-	TableName string `sql:"SHARD.users"`
+	TableName string `sql:"?shard.users"`
 
 	Id        int64
 	AccountId int64
@@ -60,10 +60,10 @@ func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 // createShard creates database schema for a given shard.
 func createShard(shard *sharding.Shard) error {
 	queries := []string{
-		`DROP SCHEMA IF EXISTS SHARD CASCADE`,
-		`CREATE SCHEMA SHARD`,
+		`DROP SCHEMA IF EXISTS ?shard CASCADE`,
+		`CREATE SCHEMA ?shard`,
 		sqlFuncs,
-		`CREATE TABLE SHARD.users (id bigint DEFAULT SHARD.next_id(), account_id int, name text, emails jsonb)`,
+		`CREATE TABLE ?shard.users (id bigint DEFAULT ?shard.next_id(), account_id int, name text, emails jsonb)`,
 	}
 
 	for _, q := range queries {
@@ -143,10 +143,10 @@ func ExampleCluster() {
 }
 
 const sqlFuncs = `
-CREATE SEQUENCE SHARD.id_seq;
+CREATE SEQUENCE ?shard.id_seq;
 
 -- _next_id returns unique sortable id.
-CREATE FUNCTION SHARD._next_id(tm timestamptz, shard_id int, seq_id bigint)
+CREATE FUNCTION ?shard._next_id(tm timestamptz, shard_id int, seq_id bigint)
 RETURNS bigint AS $$
 DECLARE
   our_epoch CONSTANT bigint := 1262304000000;
@@ -165,10 +165,10 @@ $$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE FUNCTION SHARD.next_id()
+CREATE FUNCTION ?shard.next_id()
 RETURNS bigint AS $$
 BEGIN
-   RETURN SHARD._next_id(clock_timestamp(), SHARD_ID, nextval('SHARD.id_seq'));
+   RETURN ?shard._next_id(clock_timestamp(), ?shard_id, nextval('?shard.id_seq'));
 END;
 $$
 LANGUAGE plpgsql;
