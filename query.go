@@ -18,7 +18,9 @@ type shardQuery struct {
 	fmter orm.Formatter
 }
 
-func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, error) {
+var _ orm.QueryAppender = (*shardQuery)(nil)
+
+func (q shardQuery) AppendQuery(dst []byte, params []interface{}) ([]byte, error) {
 	b := buffers.Get().([]byte)
 	defer buffers.Put(b)
 
@@ -27,7 +29,7 @@ func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, erro
 		b = append(b[:0], query...)
 	case orm.QueryAppender:
 		var err error
-		b, err = query.AppendQuery(b[:0])
+		b, err = query.AppendQuery(b[:0], nil)
 		if err != nil {
 			return nil, err
 		}
@@ -35,5 +37,5 @@ func (q shardQuery) AppendQuery(dst []byte, params ...interface{}) ([]byte, erro
 		return nil, fmt.Errorf("unsupported query type: %T", query)
 	}
 
-	return q.fmter.AppendBytes(dst, b, params...), nil
+	return q.fmter.AppendBytes(dst, b, params, false), nil
 }
