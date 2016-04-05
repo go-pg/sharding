@@ -51,7 +51,7 @@ func (shard *Shard) UseTimeout(d time.Duration) *Shard {
 }
 
 // Exec is an alias for pg.DB.Exec.
-func (shard *Shard) Exec(query interface{}, params ...interface{}) (types.Result, error) {
+func (shard *Shard) Exec(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.Fmter,
@@ -60,7 +60,7 @@ func (shard *Shard) Exec(query interface{}, params ...interface{}) (types.Result
 }
 
 // ExecOne is an alias for pg.DB.ExecOne.
-func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (types.Result, error) {
+func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.Fmter,
@@ -69,7 +69,7 @@ func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (types.Res
 }
 
 // Query is an alias for pg.DB.Query.
-func (shard *Shard) Query(model, query interface{}, params ...interface{}) (types.Result, error) {
+func (shard *Shard) Query(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.Fmter,
@@ -78,7 +78,7 @@ func (shard *Shard) Query(model, query interface{}, params ...interface{}) (type
 }
 
 // QueryOne is an alias for pg.DB.QueryOne.
-func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (types.Result, error) {
+func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.Fmter,
@@ -103,7 +103,7 @@ func (shard *Shard) Delete(model interface{}) error {
 }
 
 // CopyFrom is an alias for pg.DB.CopyFrom.
-func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface{}) (types.Result, error) {
+func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.Fmter,
@@ -112,7 +112,7 @@ func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface
 }
 
 // CopyTo is an alias for pg.DB.CopyTo.
-func (shard *Shard) CopyTo(w io.WriteCloser, query interface{}, params ...interface{}) (types.Result, error) {
+func (shard *Shard) CopyTo(w io.WriteCloser, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.Fmter,
@@ -149,7 +149,7 @@ func (tx *Tx) Rollback() error {
 }
 
 // Exec is an alias for pg.Tx.Exec.
-func (tx *Tx) Exec(query interface{}, params ...interface{}) (types.Result, error) {
+func (tx *Tx) Exec(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: tx.Shard.Fmter,
@@ -158,7 +158,7 @@ func (tx *Tx) Exec(query interface{}, params ...interface{}) (types.Result, erro
 }
 
 // ExecOne is an alias for pg.Tx.ExecOne.
-func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (types.Result, error) {
+func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: tx.Shard.Fmter,
@@ -167,7 +167,7 @@ func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (types.Result, e
 }
 
 // Query is an alias for pg.Tx.Query.
-func (tx *Tx) Query(model, query interface{}, params ...interface{}) (types.Result, error) {
+func (tx *Tx) Query(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: tx.Shard.Fmter,
@@ -176,7 +176,7 @@ func (tx *Tx) Query(model, query interface{}, params ...interface{}) (types.Resu
 }
 
 // QueryOne is an alias for pg.Tx.QueryOne.
-func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (types.Result, error) {
+func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: tx.Shard.Fmter,
