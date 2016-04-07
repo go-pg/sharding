@@ -18,7 +18,7 @@ import (
 type Shard struct {
 	id    int64
 	DB    *pg.DB
-	Fmter orm.Formatter
+	fmter orm.Formatter
 }
 
 func NewShard(id int64, db *pg.DB) *Shard {
@@ -26,8 +26,8 @@ func NewShard(id int64, db *pg.DB) *Shard {
 		id: id,
 		DB: db,
 	}
-	shard.Fmter.SetParam("shard", pg.Q(shard.Name()))
-	shard.Fmter.SetParam("shard_id", shard.Id())
+	shard.fmter.SetParam("shard", pg.Q(shard.Name()))
+	shard.fmter.SetParam("shard_id", shard.Id())
 	return shard
 }
 
@@ -54,7 +54,7 @@ func (shard *Shard) UseTimeout(d time.Duration) *Shard {
 func (shard *Shard) Exec(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: shard.Fmter,
+		fmter: shard.fmter,
 	}
 	return shard.DB.Exec(q, params...)
 }
@@ -63,7 +63,7 @@ func (shard *Shard) Exec(query interface{}, params ...interface{}) (*types.Resul
 func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: shard.Fmter,
+		fmter: shard.fmter,
 	}
 	return shard.DB.ExecOne(q, params...)
 }
@@ -72,7 +72,7 @@ func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (*types.Re
 func (shard *Shard) Query(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: shard.Fmter,
+		fmter: shard.fmter,
 	}
 	return shard.DB.Query(model, q, params...)
 }
@@ -81,7 +81,7 @@ func (shard *Shard) Query(model, query interface{}, params ...interface{}) (*typ
 func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: shard.Fmter,
+		fmter: shard.fmter,
 	}
 	return shard.DB.QueryOne(model, q, params...)
 }
@@ -106,7 +106,7 @@ func (shard *Shard) Delete(model interface{}) error {
 func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: shard.Fmter,
+		fmter: shard.fmter,
 	}
 	return shard.DB.CopyFrom(r, q, params...)
 }
@@ -115,9 +115,13 @@ func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface
 func (shard *Shard) CopyTo(w io.WriteCloser, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: shard.Fmter,
+		fmter: shard.fmter,
 	}
 	return shard.DB.CopyTo(w, q, params...)
+}
+
+func (shard *Shard) FormatQuery(dst []byte, query string, params ...interface{}) []byte {
+	return shard.fmter.Append(dst, query, params...)
 }
 
 // Tx is an alias for pg.Tx and provides same API.
@@ -152,7 +156,7 @@ func (tx *Tx) Rollback() error {
 func (tx *Tx) Exec(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: tx.Shard.Fmter,
+		fmter: tx.Shard.fmter,
 	}
 	return tx.Tx.Exec(q, params...)
 }
@@ -161,7 +165,7 @@ func (tx *Tx) Exec(query interface{}, params ...interface{}) (*types.Result, err
 func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: tx.Shard.Fmter,
+		fmter: tx.Shard.fmter,
 	}
 	return tx.Tx.ExecOne(q, params...)
 }
@@ -170,7 +174,7 @@ func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (*types.Result, 
 func (tx *Tx) Query(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: tx.Shard.Fmter,
+		fmter: tx.Shard.fmter,
 	}
 	return tx.Tx.Query(model, q, params...)
 }
@@ -179,7 +183,7 @@ func (tx *Tx) Query(model, query interface{}, params ...interface{}) (*types.Res
 func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
-		fmter: tx.Shard.Fmter,
+		fmter: tx.Shard.fmter,
 	}
 	return tx.Tx.QueryOne(model, q, params...)
 }
