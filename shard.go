@@ -31,6 +31,10 @@ func NewShard(id int64, db *pg.DB) *Shard {
 	return shard
 }
 
+func (shard *Shard) SetParam(key string, value interface{}) {
+	shard.fmter.SetParam(key, value)
+}
+
 func (shard *Shard) Id() int64 {
 	return shard.id
 }
