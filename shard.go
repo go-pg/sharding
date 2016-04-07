@@ -187,3 +187,7 @@ func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (*types.
 	}
 	return tx.Tx.QueryOne(model, q, params...)
 }
+
+func (tx *Tx) FormatQuery(dst []byte, query string, params ...interface{}) []byte {
+	return tx.Shard.FormatQuery(dst, query, params...)
+}
