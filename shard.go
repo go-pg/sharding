@@ -44,7 +44,7 @@ func (shard *Shard) String() string {
 }
 
 // WithTimeout is an alias for pg.DB.WithTimeout.
-func (shard *Shard) UseTimeout(d time.Duration) *Shard {
+func (shard *Shard) WithTimeout(d time.Duration) *Shard {
 	newShard := *shard
 	newShard.DB = shard.DB.WithTimeout(d)
 	return &newShard
@@ -124,13 +124,21 @@ func (shard *Shard) FormatQuery(dst []byte, query string, params ...interface{})
 	return shard.fmter.Append(dst, query, params...)
 }
 
-// Tx is an alias for pg.Tx and provides same API.
+// Tx is an in-progress database transaction.
+//
+// A transaction must end with a call to Commit or Rollback.
+//
+// After a call to Commit or Rollback, all operations on the transaction fail
+// with ErrTxDone.
+//
+// The statements prepared for a transaction by calling the transaction's
+// Prepare or Stmt methods are closed by the call to Commit or Rollback.
 type Tx struct {
 	Shard *Shard
 	Tx    *pg.Tx
 }
 
-// Begin is an alias for pg.DB.Begin.
+// Begin starts a transaction. Most callers should use RunInTransaction instead.
 func (shard *Shard) Begin() (*Tx, error) {
 	tx, err := shard.DB.Begin()
 	if err != nil {
@@ -142,17 +150,33 @@ func (shard *Shard) Begin() (*Tx, error) {
 	}, nil
 }
 
-// Commit is an alias for pg.Tx.Commit.
+// RunInTransaction runs a function in a transaction. If function
+// returns an error transaction is rollbacked, otherwise transaction
+// is committed.
+func (shard *Shard) RunInTransaction(fn func(*Tx) error) error {
+	tx, err := shard.Begin()
+	if err != nil {
+		return err
+	}
+
+	if err := fn(tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
+// Commit commits the transaction.
 func (tx *Tx) Commit() error {
 	return tx.Tx.Commit()
 }
 
-// Rollback is an alias for pg.Tx.Rollback.
+// Rollback aborts the transaction.
 func (tx *Tx) Rollback() error {
 	return tx.Tx.Rollback()
 }
 
-// Exec is an alias for pg.Tx.Exec.
+// Exec executes a query with the given parameters in a transaction.
 func (tx *Tx) Exec(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -161,7 +185,9 @@ func (tx *Tx) Exec(query interface{}, params ...interface{}) (*types.Result, err
 	return tx.Tx.Exec(q, params...)
 }
 
-// ExecOne is an alias for pg.Tx.ExecOne.
+// ExecOne acts like Exec, but query must affect only one row. It
+// returns ErrNoRows error when query returns zero rows or
+// ErrMultiRows when query returns multiple rows.
 func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -170,7 +196,7 @@ func (tx *Tx) ExecOne(query interface{}, params ...interface{}) (*types.Result, 
 	return tx.Tx.ExecOne(q, params...)
 }
 
-// Query is an alias for pg.Tx.Query.
+// Query executes a query with the given parameters in a transaction.
 func (tx *Tx) Query(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -179,7 +205,9 @@ func (tx *Tx) Query(model, query interface{}, params ...interface{}) (*types.Res
 	return tx.Tx.Query(model, q, params...)
 }
 
-// QueryOne is an alias for pg.Tx.QueryOne.
+// QueryOne acts like Query, but query must return only one row. It
+// returns ErrNoRows error when query returns zero rows or
+// ErrMultiRows when query returns multiple rows.
 func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
