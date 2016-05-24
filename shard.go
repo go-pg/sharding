@@ -44,7 +44,7 @@ func (shard *Shard) String() string {
 }
 
 // WithTimeout is an alias for pg.DB.WithTimeout.
-func (shard *Shard) UseTimeout(d time.Duration) *Shard {
+func (shard *Shard) WithTimeout(d time.Duration) *Shard {
 	newShard := *shard
 	newShard.DB = shard.DB.WithTimeout(d)
 	return &newShard
