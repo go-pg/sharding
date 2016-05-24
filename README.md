@@ -104,7 +104,7 @@ func ExampleCluster() {
 		panic(err)
 	}
 
-	// user2 will be created in shard1 too AccountId is the same.
+	// user2 will be created in shard1 too because AccountId is the same.
 	user2 := &User{
 		Name:      "user2",
 		AccountId: 1,
