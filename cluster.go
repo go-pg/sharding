@@ -65,6 +65,11 @@ func (cl *Cluster) Close() error {
 	return retErr
 }
 
+// DBIndex returns a db index for the shardId.
+func (cl *Cluster) DBIndex(shardId int64) int {
+	return int(shardId % int64(len(cl.dbs)))
+}
+
 // DBs returns list of unique databases in the cluster.
 func (cl *Cluster) DBs() []*pg.DB {
 	return cl.servers
@@ -85,10 +90,10 @@ func (cl *Cluster) Shards(db *pg.DB) []*Shard {
 	return shards
 }
 
-// Shard maps the id to a shard in the cluster.
-func (cl *Cluster) Shard(id int64) *Shard {
-	n := id % int64(len(cl.shards))
-	return cl.shards[n]
+// Shard maps the number to a shard in the cluster.
+func (cl *Cluster) Shard(number int64) *Shard {
+	number = number % int64(len(cl.shards))
+	return cl.shards[number]
 }
 
 // SplitShard uses SplitId to extract shard id from the id and then
