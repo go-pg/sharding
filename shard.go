@@ -43,14 +43,15 @@ func (shard *Shard) String() string {
 	return shard.Name()
 }
 
-// WithTimeout is an alias for pg.DB.WithTimeout.
+// WithTimeout returns a Shard that uses d as the read/write timeout.
 func (shard *Shard) WithTimeout(d time.Duration) *Shard {
 	newShard := *shard
 	newShard.DB = shard.DB.WithTimeout(d)
 	return &newShard
 }
 
-// Exec is an alias for pg.DB.Exec.
+// Exec executes a query ignoring returned rows. The params are for any
+// placeholder parameters in the query.
 func (shard *Shard) Exec(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -59,7 +60,9 @@ func (shard *Shard) Exec(query interface{}, params ...interface{}) (*types.Resul
 	return shard.DB.Exec(q, params...)
 }
 
-// ExecOne is an alias for pg.DB.ExecOne.
+// ExecOne acts like Exec, but query must affect only one row. It
+// returns ErrNoRows error when query returns zero rows or
+// ErrMultiRows when query returns multiple rows.
 func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -68,7 +71,8 @@ func (shard *Shard) ExecOne(query interface{}, params ...interface{}) (*types.Re
 	return shard.DB.ExecOne(q, params...)
 }
 
-// Query is an alias for pg.DB.Query.
+// Query executes a query that returns rows, typically a SELECT.
+// The params are for any placeholder parameters in the query.
 func (shard *Shard) Query(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -77,7 +81,9 @@ func (shard *Shard) Query(model, query interface{}, params ...interface{}) (*typ
 	return shard.DB.Query(model, q, params...)
 }
 
-// QueryOne is an alias for pg.DB.QueryOne.
+// QueryOne acts like Query, but query must return only one row. It
+// returns ErrNoRows error when query returns zero rows or
+// ErrMultiRows when query returns multiple rows.
 func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -86,23 +92,7 @@ func (shard *Shard) QueryOne(model, query interface{}, params ...interface{}) (*
 	return shard.DB.QueryOne(model, q, params...)
 }
 
-func (shard *Shard) Model(model interface{}) *orm.Query {
-	return orm.NewQuery(shard, model)
-}
-
-func (shard *Shard) Create(model interface{}) error {
-	return orm.Create(shard, model)
-}
-
-func (shard *Shard) Update(model interface{}) error {
-	return orm.Update(shard, model)
-}
-
-func (shard *Shard) Delete(model interface{}) error {
-	return orm.Delete(shard, model)
-}
-
-// CopyFrom is an alias for pg.DB.CopyFrom.
+// CopyFrom copies data from reader to a table.
 func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
@@ -111,13 +101,38 @@ func (shard *Shard) CopyFrom(r io.Reader, query interface{}, params ...interface
 	return shard.DB.CopyFrom(r, q, params...)
 }
 
-// CopyTo is an alias for pg.DB.CopyTo.
+// CopyTo copies data from a table to writer.
 func (shard *Shard) CopyTo(w io.WriteCloser, query interface{}, params ...interface{}) (*types.Result, error) {
 	q := shardQuery{
 		query: query,
 		fmter: shard.fmter,
 	}
 	return shard.DB.CopyTo(w, q, params...)
+}
+
+// Model returns new query for the model.
+func (shard *Shard) Model(model interface{}) *orm.Query {
+	return orm.NewQuery(shard, model)
+}
+
+// Select selects the model by primary key.
+func (shard *Shard) Select(model interface{}) error {
+	return orm.Select(shard, model)
+}
+
+// Create inserts the model updating primary keys if they are empty.
+func (shard *Shard) Create(model interface{}) error {
+	return orm.Create(shard, model)
+}
+
+// Update updates the model by primary key.
+func (shard *Shard) Update(model interface{}) error {
+	return orm.Update(shard, model)
+}
+
+// Delete deletes the model by primary key.
+func (shard *Shard) Delete(model interface{}) error {
+	return orm.Delete(shard, model)
 }
 
 func (shard *Shard) FormatQuery(dst []byte, query string, params ...interface{}) []byte {
@@ -214,6 +229,31 @@ func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (*types.
 		fmter: tx.Shard.fmter,
 	}
 	return tx.Tx.QueryOne(model, q, params...)
+}
+
+// Model returns new query for the model.
+func (tx *Tx) Model(model interface{}) *orm.Query {
+	return orm.NewQuery(tx, model)
+}
+
+// Select selects the model by primary key.
+func (tx *Tx) Select(model interface{}) error {
+	return orm.Select(tx, model)
+}
+
+// Create inserts the model updating primary keys if they are empty.
+func (tx *Tx) Create(model ...interface{}) error {
+	return orm.Create(tx, model...)
+}
+
+// Update updates the model by primary key.
+func (tx *Tx) Update(model interface{}) error {
+	return orm.Update(tx, model)
+}
+
+// Delete deletes the model by primary key.
+func (tx *Tx) Delete(model interface{}) error {
+	return orm.Delete(tx, model)
 }
 
 func (tx *Tx) FormatQuery(dst []byte, query string, params ...interface{}) []byte {
