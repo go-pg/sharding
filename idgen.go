@@ -6,15 +6,20 @@ import (
 )
 
 const (
-	epoch     = int64(1262304000000) // 2010-01-01 00:00:00 +0000 UTC
-	shardMask = int64(1<<11) - 1     // 2047
-	seqMask   = int64(1<<12) - 1     // 4095
+	shardBits = 11
+	seqBits   = 12
+)
+
+const (
+	epoch     = int64(1262304000000)    // 2010-01-01 00:00:00 +0000 UTC
+	shardMask = int64(1)<<shardBits - 1 // 2047
+	seqMask   = int64(1)<<seqBits - 1   // 4095
 )
 
 // IdGen generates sortable unique int64 numbers that consist of:
 // - 41 bits for time in milliseconds.
-// - 11 bits that represent the shard id.
-// - 12 bits that represent an auto-incrementing sequence.
+// - 11 bits for shard id.
+// - 12 bits for auto-incrementing sequence.
 //
 // That means that for 35 years we can generate 4096 ids per
 // millisecond for 2048 shards.
@@ -30,28 +35,28 @@ func NewIdGen(shard int64) *IdGen {
 	}
 }
 
-// NextTime returns increasing id for the time. Note that you can only
+// NextTime returns incremental id for the time. Note that you can only
 // generate 4096 unique numbers per millisecond.
 func (g *IdGen) NextTime(tm time.Time) int64 {
 	seq := atomic.AddInt64(&g.seq, 1) - 1
 	id := tm.UnixNano()/int64(time.Millisecond) - epoch
-	id <<= 23
-	id |= g.shard << 12
+	id <<= (shardBits + seqBits)
+	id |= g.shard << seqBits
 	id |= seq % (seqMask + 1)
 	return id
 }
 
-// Next acts like NextTime, but returns id for current time.
+// Next acts like NextTime, but returns id for the current time.
 func (g *IdGen) Next() int64 {
 	return g.NextTime(time.Now())
 }
 
 // SplitId splits id into time, shard id, and sequence id.
 func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
-	ms := int64(id>>23) + epoch
+	ms := id>>(shardBits+seqBits) + epoch
 	sec := ms / 1000
 	tm = time.Unix(sec, (ms-sec*1000)*int64(time.Millisecond))
-	shardId = (id >> 12) & shardMask
+	shardId = (id >> seqBits) & shardMask
 	seqId = id & seqMask
 	return
 }
