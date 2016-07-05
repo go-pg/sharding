@@ -2,6 +2,8 @@ package sharding // import "gopkg.in/go-pg/sharding.v4"
 
 import (
 	"fmt"
+	"hash/fnv"
+	"io"
 	"sync"
 
 	"gopkg.in/pg.v4"
@@ -94,6 +96,13 @@ func (cl *Cluster) Shards(db *pg.DB) []*Shard {
 func (cl *Cluster) Shard(number int64) *Shard {
 	number = number % int64(len(cl.shards))
 	return cl.shards[number]
+}
+
+// ShardString maps the str to a shard in the cluster.
+func (cl *Cluster) ShardString(str string) *Shard {
+	h := fnv.New32a()
+	io.WriteString(h, str)
+	return cl.Shard(int64(h.Sum32()))
 }
 
 // SplitShard uses SplitId to extract shard id from the id and then
