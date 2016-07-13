@@ -21,8 +21,8 @@ const (
 // - 11 bits for shard id.
 // - 12 bits for auto-incrementing sequence.
 //
-// That means that for 35 years we can generate 4096 ids per
-// millisecond for 2048 shards.
+// As a result we can generate 4096 ids per millisecond for each of 2048 shards.
+// Minimum supported time is 1976-01-01, maximum is 2044-12-31.
 type IdGen struct {
 	seq   int64
 	shard int64
@@ -31,7 +31,7 @@ type IdGen struct {
 // NewIdGen returns id generator for the shard.
 func NewIdGen(shard int64) *IdGen {
 	return &IdGen{
-		shard: shard % (shardMask + 1),
+		shard: shard % 2048,
 	}
 }
 
