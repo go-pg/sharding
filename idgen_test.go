@@ -1,6 +1,7 @@
 package sharding_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -8,16 +9,15 @@ import (
 )
 
 func TestTime(t *testing.T) {
-	tm := time.Date(2010, time.January, 01, 0, 0, 0, 0, time.UTC)
-	g := sharding.NewIdGen(0)
-	prev := int64(-1)
-	for i := 0; i < 35; i++ {
+	g := sharding.NewIdGen(2049)
+	prev := int64(math.MinInt64)
+	for i := 1976; i <= 2044; i++ {
+		tm := time.Date(i, time.January, 01, 0, 0, 0, 0, time.UTC)
 		next := g.NextTime(tm)
 		if next <= prev {
 			t.Errorf("%s: next=%d, prev=%d", tm, next, prev)
 		}
 		prev = next
-		tm = tm.AddDate(1, 0, 0)
 	}
 }
 
