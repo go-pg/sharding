@@ -1,7 +1,6 @@
 package sharding_test
 
 import (
-	"sync"
 	"testing"
 	"time"
 
@@ -22,57 +21,7 @@ func TestTime(t *testing.T) {
 	}
 }
 
-func TestSequence(t *testing.T) {
-	g := sharding.NewIdGen(0)
-	tm := time.Now()
-
-	var prev int64
-	for i := 0; i < 4096; i++ {
-		next := g.NextTime(tm)
-		if next <= prev {
-			t.Errorf("iter %d: next=%d, prev=%d", i, next, prev)
-		}
-		prev = next
-	}
-}
-
-func TestIdGen(t *testing.T) {
-	N := 50000
-	tm := time.Now()
-
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
-
-	gen1 := sharding.NewIdGen(1)
-	v1 := make([]int64, N)
-	go func() {
-		for i := 0; i < N; i++ {
-			v1[i] = gen1.NextTime(tm)
-		}
-		wg.Done()
-	}()
-
-	gen2 := sharding.NewIdGen(2)
-	v2 := make([]int64, N)
-	go func() {
-		for i := 0; i < N; i++ {
-			v2[i] = gen2.NextTime(tm)
-		}
-		wg.Done()
-	}()
-
-	wg.Wait()
-
-	for i := 0; i < N; i++ {
-		for j := 0; j < N; j++ {
-			if v1[i] == v2[j] {
-				t.Fatalf("same numbers: %d and %d", v1[i], v2[j])
-			}
-		}
-	}
-}
-
-func TestSplit(t *testing.T) {
+func TestShard(t *testing.T) {
 	tm := time.Now()
 	for shard := int64(0); shard < 2048; shard++ {
 		gen := sharding.NewIdGen(shard)
@@ -87,5 +36,44 @@ func TestSplit(t *testing.T) {
 		if gotSeq != 0 {
 			t.Errorf("got %d, expected 1", gotSeq)
 		}
+	}
+}
+
+func TestSequence(t *testing.T) {
+	g := sharding.NewIdGen(0)
+	tm := time.Now()
+
+	var prev int64
+	for i := 0; i < 4096; i++ {
+		next := g.NextTime(tm)
+		if next <= prev {
+			t.Errorf("iter %d: next=%d, prev=%d", i, next, prev)
+		}
+		prev = next
+	}
+}
+
+func TestCollision(t *testing.T) {
+	tm := time.Now()
+	m := map[int64]struct{}{}
+
+	gen := sharding.NewIdGen(1)
+	for i := 0; i < 4096; i++ {
+		id := gen.NextTime(tm)
+		_, ok := m[id]
+		if ok {
+			t.Fatalf("collision for %d", id)
+		}
+		m[id] = struct{}{}
+	}
+
+	gen = sharding.NewIdGen(2)
+	for i := 0; i < 4096; i++ {
+		id := gen.NextTime(tm)
+		_, ok := m[id]
+		if ok {
+			t.Fatalf("collision for %d", id)
+		}
+		m[id] = struct{}{}
 	}
 }
