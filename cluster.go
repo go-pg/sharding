@@ -138,11 +138,12 @@ func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 // ForEachShard concurrently calls the fn on each shard in the cluster.
 func (cl *Cluster) ForEachShard(fn func(shard *Shard) error) error {
 	return cl.ForEachDB(func(db *pg.DB) error {
+		var retErr error
 		for _, shard := range cl.Shards(db) {
-			if err := fn(shard); err != nil {
-				return err
+			if err := fn(shard); err != nil && retErr == nil {
+				retErr = err
 			}
 		}
-		return nil
+		return retErr
 	})
 }
