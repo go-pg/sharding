@@ -1,13 +1,22 @@
 package sharding
 
 import (
+	"database/sql"
+	"database/sql/driver"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"time"
+
+	"gopkg.in/pg.v4/types"
 )
 
 type UUID []byte
+
+var _ types.ValueAppender = (UUID)(nil)
+var _ sql.Scanner = (*UUID)(nil)
+var _ driver.Valuer = (*UUID)(nil)
 
 func NewUUID(shard int64, tm time.Time) UUID {
 	shard = shard % 2048
@@ -20,6 +29,19 @@ func NewUUID(shard int64, tm time.Time) UUID {
 	return b
 }
 
+func ParseUUID(b []byte) (UUID, error) {
+	if len(b) != 32 {
+		return nil, fmt.Errorf("sharding: invalid UUID: %s", b)
+	}
+	u := make([]byte, 16)
+	hex.Encode(u[:4], b[:8])
+	hex.Encode(u[4:6], b[9:13])
+	hex.Encode(u[6:8], b[14:18])
+	hex.Encode(u[8:10], b[19:23])
+	hex.Encode(u[10:], b[24:])
+	return u, nil
+}
+
 func (u UUID) Split() (shardId int64, tm time.Time) {
 	b := []byte(u)
 	tm = fromUnixMicrosecond(int64(binary.BigEndian.Uint64(b[:8])))
@@ -29,8 +51,19 @@ func (u UUID) Split() (shardId int64, tm time.Time) {
 }
 
 func (u UUID) String() string {
-	b := make([]byte, 36)
-	hex.Encode(b[0:8], u[0:4])
+	b, _ := u.AppendValue(nil, 0)
+	return string(b)
+}
+
+func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
+	if quote == 2 {
+		b = append(b, '"')
+	} else if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	b = append(b, make([]byte, 36)...)
+	hex.Encode(b[:8], u[:4])
 	b[8] = '-'
 	hex.Encode(b[9:13], u[4:6])
 	b[13] = '-'
@@ -39,7 +72,30 @@ func (u UUID) String() string {
 	hex.Encode(b[19:23], u[8:10])
 	b[23] = '-'
 	hex.Encode(b[24:], u[10:])
-	return string(b)
+
+	if quote == 2 {
+		b = append(b, '"')
+	} else if quote == 1 {
+		b = append(b, '\'')
+	}
+
+	return b, nil
+}
+
+func (u UUID) Value() (driver.Value, error) {
+	return u.String(), nil
+}
+
+func (u *UUID) Scan(b interface{}) error {
+	if b == nil {
+		*u = nil
+	}
+	uuid, err := ParseUUID(b.([]byte))
+	if err != nil {
+		return err
+	}
+	*u = uuid
+	return nil
 }
 
 func unixMicrosecond(tm time.Time) int64 {
