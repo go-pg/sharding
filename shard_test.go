@@ -1,6 +1,9 @@
 package sharding_test
 
 import (
+	"math"
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -33,5 +36,13 @@ var _ = Describe("Shard", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardId).To(Equal(1234))
 		Expect(hello).To(Equal("hello"))
+	})
+
+	It("supports UUID", func() {
+		src := sharding.NewUUID(1234, time.Unix(math.MaxInt64, 0))
+		var dst sharding.UUID
+		_, err := shard.QueryOne(pg.Scan(&dst), `SELECT ?`, src)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(dst).To(Equal(src))
 	})
 })
