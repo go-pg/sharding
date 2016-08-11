@@ -1,11 +1,30 @@
 package sharding_test
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
 	"gopkg.in/go-pg/sharding.v4"
 )
+
+func TestUUIDParse(t *testing.T) {
+	tm := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
+	uuid := sharding.NewUUID(0, tm)
+	got := uuid.String()
+	wanted := "00035d01-3b37-e000-1000-5f0f9a621d72"
+	if got != wanted {
+		t.Fatalf("got %q, wanted %q", got, wanted)
+	}
+
+	parsed, err := sharding.ParseUUID([]byte(got))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(parsed, uuid) {
+		t.Fatalf("got %x, wanted %x", parsed, uuid)
+	}
+}
 
 func TestUUIDTime(t *testing.T) {
 	shard := int64(2047)
