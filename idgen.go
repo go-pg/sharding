@@ -69,3 +69,8 @@ func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
 	seqId = id & seqMask
 	return
 }
+
+// MaxIdTime returns max id for the time.
+func MaxIdTime(tm time.Time) int64 {
+	return NewIdGen(shardMask).MaxTime(tm)
+}
