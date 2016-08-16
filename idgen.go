@@ -51,6 +51,15 @@ func (g *IdGen) Next() int64 {
 	return g.NextTime(time.Now())
 }
 
+// MaxTime returns max id for the time.
+func (g *IdGen) MaxTime(tm time.Time) int64 {
+	id := tm.UnixNano()/int64(time.Millisecond) - epoch
+	id <<= (shardBits + seqBits)
+	id |= g.shard << seqBits
+	id |= seqMask
+	return id
+}
+
 // SplitId splits id into time, shard id, and sequence id.
 func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
 	ms := id>>(shardBits+seqBits) + epoch
