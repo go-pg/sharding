@@ -2,6 +2,7 @@ package sharding_test
 
 import (
 	"bytes"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -9,10 +10,12 @@ import (
 )
 
 func TestUUIDParse(t *testing.T) {
+	sharding.SetRandSeed(rand.New(rand.NewSource(0)))
+
 	tm := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 	uuid := sharding.NewUUID(0, tm)
 	got := uuid.String()
-	wanted := "00035d01-3b37-e000-1000-5f0f9a621d72"
+	wanted := "00035d01-3b37-e000-0000-fdc2fa2ffcc0"
 	if got != wanted {
 		t.Fatalf("got %q, wanted %q", got, wanted)
 	}

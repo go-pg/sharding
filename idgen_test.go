@@ -42,12 +42,16 @@ func TestShard(t *testing.T) {
 func TestSequence(t *testing.T) {
 	g := sharding.NewIdGen(0)
 	tm := time.Now()
+	max := g.MaxTime(tm)
 
 	var prev int64
 	for i := 0; i < 4096; i++ {
 		next := g.NextTime(tm)
 		if next <= prev {
-			t.Errorf("iter %d: next=%d, prev=%d", i, next, prev)
+			t.Errorf("iter %d: next=%d prev=%d", i, next, prev)
+		}
+		if next > max {
+			t.Errorf("iter %d: next=%d max=%d", i, next, max)
 		}
 		prev = next
 	}
