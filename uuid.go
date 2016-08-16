@@ -15,6 +15,8 @@ import (
 const uuidLen = 16
 const uuidHexLen = 36
 
+var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 type UUID []byte
 
 var _ types.ValueAppender = (UUID)(nil)
@@ -26,7 +28,7 @@ func NewUUID(shard int64, tm time.Time) UUID {
 
 	b := make([]byte, uuidLen)
 	binary.BigEndian.PutUint64(b[:8], uint64(unixMicrosecond(tm)))
-	rand.Read(b[8:])
+	randSeed.Read(b[8:])
 	b[8] = (b[8] &^ 0x7) | byte(shard>>8)
 	b[9] = byte(shard)
 	return b
