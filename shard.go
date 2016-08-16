@@ -111,8 +111,8 @@ func (shard *Shard) CopyTo(w io.WriteCloser, query interface{}, params ...interf
 }
 
 // Model returns new query for the model.
-func (shard *Shard) Model(model interface{}) *orm.Query {
-	return orm.NewQuery(shard, model)
+func (shard *Shard) Model(model ...interface{}) *orm.Query {
+	return orm.NewQuery(shard, model...)
 }
 
 // Select selects the model by primary key.
@@ -232,8 +232,8 @@ func (tx *Tx) QueryOne(model, query interface{}, params ...interface{}) (*types.
 }
 
 // Model returns new query for the model.
-func (tx *Tx) Model(model interface{}) *orm.Query {
-	return orm.NewQuery(tx, model)
+func (tx *Tx) Model(model ...interface{}) *orm.Query {
+	return orm.NewQuery(tx, model...)
 }
 
 // Select selects the model by primary key.
