@@ -70,6 +70,11 @@ func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
 	return
 }
 
+// MinIdTime returns min id for the time.
+func MinIdTime(tm time.Time) int64 {
+	return NewIdGen(shardMask).NextTime(tm)
+}
+
 // MaxIdTime returns max id for the time.
 func MaxIdTime(tm time.Time) int64 {
 	return NewIdGen(shardMask).MaxTime(tm)
