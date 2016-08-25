@@ -23,14 +23,14 @@ var _ types.ValueAppender = (UUID)(nil)
 var _ sql.Scanner = (*UUID)(nil)
 var _ driver.Valuer = (*UUID)(nil)
 
-func NewUUID(shard int64, tm time.Time) UUID {
-	shard = shard % 2048
+func NewUUID(shardId int64, tm time.Time) UUID {
+	shardId = shardId % 2048
 
 	b := make([]byte, uuidLen)
 	binary.BigEndian.PutUint64(b[:8], uint64(unixMicrosecond(tm)))
 	randSeed.Read(b[8:])
-	b[8] = (b[8] &^ 0x7) | byte(shard>>8)
-	b[9] = byte(shard)
+	b[8] = (b[8] &^ 0x7) | byte(shardId>>8)
+	b[9] = byte(shardId)
 	return b
 }
 
@@ -53,6 +53,16 @@ func (u UUID) Split() (shardId int64, tm time.Time) {
 	shardId |= (int64(b[8]) & 0x7) << 8
 	shardId |= int64(b[9])
 	return
+}
+
+func (u UUID) ShardId() int64 {
+	shardId, _ := u.Split()
+	return shardId
+}
+
+func (u UUID) Time() time.Time {
+	_, tm := u.Split()
+	return tm
 }
 
 func (u UUID) String() string {
