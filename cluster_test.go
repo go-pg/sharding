@@ -8,9 +8,9 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/pg.v4"
+	"gopkg.in/pg.v5"
 
-	"gopkg.in/go-pg/sharding.v4"
+	"gopkg.in/go-pg/sharding.v5"
 )
 
 func TestSharding(t *testing.T) {

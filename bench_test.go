@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/go-pg/sharding.v4"
-	"gopkg.in/pg.v4"
+	"gopkg.in/pg.v5"
+
+	"gopkg.in/go-pg/sharding.v5"
 )
 
 func benchmarkDB() *pg.DB {

@@ -3,7 +3,7 @@ package sharding
 import (
 	"fmt"
 
-	"gopkg.in/pg.v4/orm"
+	"gopkg.in/pg.v5/orm"
 )
 
 type shardQuery struct {

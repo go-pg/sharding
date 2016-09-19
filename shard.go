@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"gopkg.in/pg.v4"
-	"gopkg.in/pg.v4/orm"
-	"gopkg.in/pg.v4/types"
+	"gopkg.in/pg.v5"
+	"gopkg.in/pg.v5/orm"
+	"gopkg.in/pg.v5/types"
 )
 
 // Shard represents logical shard in Cluster and is responsible for
@@ -26,7 +26,7 @@ func NewShard(id int64, db *pg.DB) *Shard {
 		id: id,
 		DB: db,
 	}
-	shard.fmter.SetParam("shard", pg.Q(shard.Name()))
+	shard.fmter.SetParam("shard", types.F(shard.Name()))
 	shard.fmter.SetParam("shard_id", shard.Id())
 	return shard
 }
@@ -120,9 +120,9 @@ func (shard *Shard) Select(model interface{}) error {
 	return orm.Select(shard, model)
 }
 
-// Create inserts the model updating primary keys if they are empty.
-func (shard *Shard) Create(model interface{}) error {
-	return orm.Create(shard, model)
+// Insert inserts the model updating primary keys if they are empty.
+func (shard *Shard) Insert(model ...interface{}) error {
+	return orm.Insert(shard, model...)
 }
 
 // Update updates the model by primary key.
@@ -241,9 +241,9 @@ func (tx *Tx) Select(model interface{}) error {
 	return orm.Select(tx, model)
 }
 
-// Create inserts the model updating primary keys if they are empty.
-func (tx *Tx) Create(model ...interface{}) error {
-	return orm.Create(tx, model...)
+// Insert inserts the model updating primary keys if they are empty.
+func (tx *Tx) Insert(model ...interface{}) error {
+	return orm.Insert(tx, model...)
 }
 
 // Update updates the model by primary key.
