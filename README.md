@@ -2,14 +2,14 @@
 
 This package uses a [go-pg PostgreSQL client](https://github.com/go-pg/pg) to help sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram). In 2 words it maps many (2048-8192) logical shards implemented using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 
-API docs: http://godoc.org/gopkg.in/go-pg/sharding.v4.
-Examples: http://godoc.org/gopkg.in/go-pg/sharding.v4#pkg-examples.
+API docs: http://godoc.org/gopkg.in/go-pg/sharding.v5.
+Examples: http://godoc.org/gopkg.in/go-pg/sharding.v5#pkg-examples.
 
 ## Installation
 
 To install:
 
-    go get gopkg.in/go-pg/sharding.v4
+    go get gopkg.in/go-pg/sharding.v5
 
 ## Quickstart
 
@@ -19,8 +19,8 @@ package sharding_test
 import (
 	"fmt"
 
-	"gopkg.in/go-pg/sharding.v4"
-	"gopkg.in/pg.v4"
+	"gopkg.in/go-pg/sharding.v5"
+	"gopkg.in/pg.v5"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are
@@ -40,7 +40,7 @@ func (u User) String() string {
 
 // CreateUser picks shard by account id and creates user in the shard.
 func CreateUser(cluster *sharding.Cluster, user *User) error {
-	return cluster.Shard(user.AccountId).Create(user)
+	return cluster.Shard(user.AccountId).Insert(user)
 }
 
 // GetUser splits shard from user id and fetches user from the shard.
@@ -58,7 +58,7 @@ func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 }
 
 // createShard creates database schema for a given shard.
-func createShard(shard *sharding.Shard) error {
+func createShard(shard *pg.DB) error {
 	queries := []string{
 		`DROP SCHEMA IF EXISTS ?shard CASCADE`,
 		`CREATE SCHEMA ?shard`,
@@ -104,7 +104,7 @@ func ExampleCluster() {
 		panic(err)
 	}
 
-	// user2 will be created in shard1 too because AccountId is the same.
+	// user2 will be created in shard1 too AccountId is the same.
 	user2 := &User{
 		Name:      "user2",
 		AccountId: 1,
