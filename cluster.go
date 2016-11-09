@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"strconv"
 	"sync"
 
 	"gopkg.in/pg.v5"
+	"gopkg.in/pg.v5/types"
 )
 
 // Cluster maps many (up to 8198) logical database shards implemented
 // using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
 	dbs, servers []*pg.DB
-	shards       []*Shard
+	shards       []*pg.DB
 }
 
 // NewCluster returns new PostgreSQL cluster consisting of physical
@@ -36,7 +38,7 @@ func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
 	}
 	cl := &Cluster{
 		dbs:    dbs,
-		shards: make([]*Shard, nshards),
+		shards: make([]*pg.DB, nshards),
 	}
 	cl.init()
 	return cl
@@ -53,8 +55,13 @@ func (cl *Cluster) init() {
 	}
 
 	for i := 0; i < len(cl.shards); i++ {
-		cl.shards[i] = NewShard(int64(i), cl.dbs[i%len(cl.dbs)])
+		cl.shards[i] = newShard(cl.dbs[i%len(cl.dbs)], int64(i))
 	}
+}
+
+func newShard(db *pg.DB, id int64) *pg.DB {
+	name := "shard" + strconv.FormatInt(id, 10)
+	return db.WithParam("shard_id", id).WithParam("shard", types.F(name))
 }
 
 func (cl *Cluster) Close() error {
@@ -79,13 +86,13 @@ func (cl *Cluster) DBs() []*pg.DB {
 
 // Shards returns list of shards running in the db. If db is nil all
 // shards are returned.
-func (cl *Cluster) Shards(db *pg.DB) []*Shard {
+func (cl *Cluster) Shards(db *pg.DB) []*pg.DB {
 	if db == nil {
 		return cl.shards
 	}
-	var shards []*Shard
-	for _, shard := range cl.shards {
-		if shard.DB == db {
+	var shards []*pg.DB
+	for i, shard := range cl.shards {
+		if cl.dbs[i%len(cl.dbs)] == db {
 			shards = append(shards, shard)
 		}
 	}
@@ -93,13 +100,13 @@ func (cl *Cluster) Shards(db *pg.DB) []*Shard {
 }
 
 // Shard maps the number to a shard in the cluster.
-func (cl *Cluster) Shard(number int64) *Shard {
+func (cl *Cluster) Shard(number int64) *pg.DB {
 	number = number % int64(len(cl.shards))
 	return cl.shards[number]
 }
 
 // ShardString maps the str to a shard in the cluster.
-func (cl *Cluster) ShardString(str string) *Shard {
+func (cl *Cluster) ShardString(str string) *pg.DB {
 	h := fnv.New32a()
 	io.WriteString(h, str)
 	return cl.Shard(int64(h.Sum32()))
@@ -107,7 +114,7 @@ func (cl *Cluster) ShardString(str string) *Shard {
 
 // SplitShard uses SplitId to extract shard id from the id and then
 // returns corresponding cluster Shard.
-func (cl *Cluster) SplitShard(id int64) *Shard {
+func (cl *Cluster) SplitShard(id int64) *pg.DB {
 	_, shardId, _ := SplitId(id)
 	return cl.Shard(shardId)
 }
@@ -136,7 +143,7 @@ func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 }
 
 // ForEachShard concurrently calls the fn on each shard in the cluster.
-func (cl *Cluster) ForEachShard(fn func(shard *Shard) error) error {
+func (cl *Cluster) ForEachShard(fn func(db *pg.DB) error) error {
 	return cl.ForEachDB(func(db *pg.DB) error {
 		var retErr error
 		for _, shard := range cl.Shards(db) {
