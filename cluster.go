@@ -143,6 +143,7 @@ func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 }
 
 // ForEachShard concurrently calls the fn on each shard in the cluster.
+// It is the same as ForEachNShards(1, fn).
 func (cl *Cluster) ForEachShard(fn func(db *pg.DB) error) error {
 	return cl.ForEachDB(func(db *pg.DB) error {
 		var retErr error
@@ -152,5 +153,38 @@ func (cl *Cluster) ForEachShard(fn func(db *pg.DB) error) error {
 			}
 		}
 		return retErr
+	})
+}
+
+// ForEachNShards concurrently calls the fn on each N shards in the cluster.
+func (cl *Cluster) ForEachNShards(n int, fn func(db *pg.DB) error) error {
+	return cl.ForEachDB(func(db *pg.DB) error {
+		var wg sync.WaitGroup
+		errCh := make(chan error, 1)
+		limit := make(chan struct{}, n)
+		for _, shard := range cl.Shards(db) {
+			limit <- struct{}{}
+			wg.Add(1)
+			go func(shard *pg.DB) {
+				defer func() {
+					<-limit
+					wg.Done()
+				}()
+				if err := fn(shard); err != nil {
+					select {
+					case errCh <- err:
+					default:
+					}
+				}
+			}(shard)
+		}
+		wg.Wait()
+
+		select {
+		case err := <-errCh:
+			return err
+		default:
+			return nil
+		}
 	})
 }

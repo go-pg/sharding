@@ -217,4 +217,38 @@ var _ = Describe("Cluster", func() {
 			Expect(err).To(MatchError("fake error"))
 		})
 	})
+
+	Describe("ForEachNShards", func() {
+		It("fn is called once for every shard", func() {
+			var shards []string
+			var mu sync.Mutex
+			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
+				defer GinkgoRecover()
+
+				s := string(shard.FormatQuery(nil, "?shard_id"))
+
+				mu.Lock()
+				Expect(shards).NotTo(ContainElement(s))
+				shards = append(shards, s)
+				mu.Unlock()
+				return nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(shards).To(HaveLen(4))
+			for i := 0; i < 4; i++ {
+				Expect(shards).To(ContainElement(fmt.Sprintf("%d", i)))
+			}
+		})
+
+		It("returns an error if fn fails", func() {
+			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
+				s := string(shard.FormatQuery(nil, "?shard_id"))
+				if s == "3" {
+					return errors.New("fake error")
+				}
+				return nil
+			})
+			Expect(err).To(MatchError("fake error"))
+		})
+	})
 })
