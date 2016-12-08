@@ -40,11 +40,16 @@ var _ = Describe("named params", func() {
 
 	It("supports ?shard_id", func() {
 		var shardId int
-		var hello string
-		_, err := cluster.Shard(3).QueryOne(pg.Scan(&shardId, &hello), `SELECT ?shard_id, ?`, "hello")
+		_, err := cluster.Shard(3).QueryOne(pg.Scan(&shardId), "SELECT ?shard_id")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardId).To(Equal(3))
-		Expect(hello).To(Equal("hello"))
+	})
+
+	It("support ?epoch", func() {
+		var epoch int
+		_, err := cluster.Shard(0).QueryOne(pg.Scan(&epoch), "SELECT ?epoch")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(epoch).To(Equal(1262304000000))
 	})
 
 	It("supports UUID", func() {
