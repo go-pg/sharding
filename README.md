@@ -24,7 +24,7 @@ import (
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are
-// placed on same shard.
+// placed on the same shard.
 type User struct {
 	TableName string `sql:"?shard.users"`
 
@@ -104,7 +104,7 @@ func ExampleCluster() {
 		panic(err)
 	}
 
-	// user2 will be created in shard1 too AccountId is the same.
+	// user2 will be created in shard1 too because AccountId is the same.
 	user2 := &User{
 		Name:      "user2",
 		AccountId: 1,
@@ -149,14 +149,13 @@ CREATE SEQUENCE ?shard.id_seq;
 CREATE FUNCTION ?shard._next_id(tm timestamptz, shard_id int, seq_id bigint)
 RETURNS bigint AS $$
 DECLARE
-  our_epoch CONSTANT bigint := 1262304000000;
   max_shard_id CONSTANT bigint := 2048;
   max_seq_id CONSTANT bigint := 4096;
   id bigint;
 BEGIN
   shard_id := shard_id % max_shard_id;
   seq_id := seq_id % max_seq_id;
-  id := (floor(extract(epoch FROM tm) * 1000)::bigint - our_epoch) << 23;
+  id := (floor(extract(epoch FROM tm) * 1000)::bigint - ?epoch) << 23;
   id := id | (shard_id << 12);
   id := id | seq_id;
   RETURN id;
