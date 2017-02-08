@@ -8,6 +8,22 @@ import (
 	"gopkg.in/go-pg/sharding.v5"
 )
 
+func TestMinIdMaxId(t *testing.T) {
+	tm := time.Unix(1262304000, 0)
+
+	minId := sharding.MinIdTime(tm)
+	const wantedMinId = 0
+	if minId != wantedMinId {
+		t.Errorf("got %d, wanted %d", minId, wantedMinId)
+	}
+
+	maxId := sharding.MaxIdTime(tm)
+	const wantedMaxId = 8388607
+	if maxId != wantedMaxId {
+		t.Errorf("got %d, wanted %d", maxId, wantedMaxId)
+	}
+}
+
 func TestTime(t *testing.T) {
 	g := sharding.NewIdGen(2049)
 	prev := int64(math.MinInt64)
