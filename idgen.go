@@ -1,6 +1,7 @@
 package sharding
 
 import (
+	"math"
 	"sync/atomic"
 	"time"
 )
@@ -16,13 +17,15 @@ const (
 	seqMask   = int64(1)<<seqBits - 1   // 4095
 )
 
+var minTime = time.Date(1975, time.February, 28, 4, 6, 12, 224000000, time.UTC)
+
 // IdGen generates sortable unique int64 numbers that consist of:
 // - 41 bits for time in milliseconds.
 // - 11 bits for shard id.
 // - 12 bits for auto-incrementing sequence.
 //
 // As a result we can generate 4096 ids per millisecond for each of 2048 shards.
-// Minimum supported time is 1976-01-01, maximum is 2044-12-31.
+// Minimum supported time is 1975-02-28, maximum is 2044-12-31.
 type IdGen struct {
 	seq   int64
 	shard int64
@@ -72,6 +75,9 @@ func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
 
 // MinIdTime returns min id for the time.
 func MinIdTime(tm time.Time) int64 {
+	if tm.Before(minTime) {
+		return int64(math.MinInt64)
+	}
 	return NewIdGen(0).NextTime(tm)
 }
 
