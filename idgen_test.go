@@ -24,6 +24,47 @@ func TestMinIdMaxId(t *testing.T) {
 	}
 }
 
+func TestMinId(t *testing.T) {
+	minTime := time.Date(1975, time.February, 28, 4, 6, 12, 224000000, time.UTC)
+
+	var tests = []struct {
+		tm       time.Time
+		wantedId int64
+	}{
+		{
+			tm:       minTime.Add(-2 * time.Millisecond),
+			wantedId: math.MinInt64,
+		},
+		{
+			tm:       minTime.Add(-time.Millisecond),
+			wantedId: math.MinInt64,
+		},
+		{
+			tm:       minTime,
+			wantedId: math.MinInt64,
+		},
+		{
+			tm:       minTime.Add(time.Millisecond),
+			wantedId: math.MinInt64 + 1<<23,
+		},
+		{
+			tm:       minTime.Add(2 * time.Millisecond),
+			wantedId: math.MinInt64 + 2<<23,
+		},
+		{
+			tm:       minTime.Add(time.Hour),
+			wantedId: (math.MinInt64 + 3600000<<23),
+		},
+	}
+
+	for _, test := range tests {
+		minId := sharding.MinIdTime(test.tm)
+		if minId != test.wantedId {
+			t.Errorf("got %d, wanted %d", minId, test.wantedId)
+		}
+	}
+}
+
 func TestTime(t *testing.T) {
 	g := sharding.NewIdGen(2049)
 	prev := int64(math.MinInt64)
