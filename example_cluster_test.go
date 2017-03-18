@@ -3,8 +3,9 @@ package sharding_test
 import (
 	"fmt"
 
-	"gopkg.in/go-pg/sharding.v5"
-	"gopkg.in/pg.v5"
+	"github.com/go-pg/sharding"
+
+	"github.com/go-pg/pg"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are

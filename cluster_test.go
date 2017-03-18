@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-pg/sharding"
+
+	"github.com/go-pg/pg"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"gopkg.in/pg.v5"
-
-	"gopkg.in/go-pg/sharding.v5"
 )
 
 func TestGinkgo(t *testing.T) {

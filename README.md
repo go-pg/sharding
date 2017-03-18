@@ -2,14 +2,14 @@
 
 This package uses a [go-pg PostgreSQL client](https://github.com/go-pg/pg) to help sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram). In 2 words it maps many (2048-8192) logical shards implemented using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 
-API docs: http://godoc.org/gopkg.in/go-pg/sharding.v5.
-Examples: http://godoc.org/gopkg.in/go-pg/sharding.v5#pkg-examples.
+API docs: http://godoc.org/github.com/go-pg/sharding.
+Examples: http://godoc.org/github.com/go-pg/sharding#pkg-examples.
 
 ## Installation
 
 To install:
 
-    go get gopkg.in/go-pg/sharding.v5
+    go get github.com/go-pg/sharding
 
 ## Quickstart
 
@@ -19,8 +19,8 @@ package sharding_test
 import (
 	"fmt"
 
-	"gopkg.in/go-pg/sharding.v5"
-	"gopkg.in/pg.v5"
+	"github.com/go-pg/sharding"
+	"github.com/go-pg/pg"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/go-pg/sharding.v5"
+	"github.com/go-pg/sharding"
 )
 
 func TestMinIdMaxId(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"time"
 
-	"gopkg.in/pg.v5/types"
+	"github.com/go-pg/pg/types"
 )
 
 const uuidLen = 16
