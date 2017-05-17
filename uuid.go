@@ -76,12 +76,12 @@ func (u *UUID) Time() time.Time {
 	return tm
 }
 
-func (u *UUID) String() string {
+func (u UUID) String() string {
 	b, _ := u.AppendValue(nil, 0)
 	return string(b)
 }
 
-func (u *UUID) AppendValue(b []byte, quote int) ([]byte, error) {
+func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
 	if u.IsZero() {
 		return types.AppendNull(b, quote), nil
 	}
