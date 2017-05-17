@@ -17,28 +17,28 @@ const uuidHexLen = 36
 
 var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-type UUID []byte
+type UUID [uuidLen]byte
 
-var _ types.ValueAppender = (UUID)(nil)
+var _ types.ValueAppender = (*UUID)(nil)
 var _ sql.Scanner = (*UUID)(nil)
 var _ driver.Valuer = (*UUID)(nil)
 
 func NewUUID(shardId int64, tm time.Time) UUID {
 	shardId = shardId % 2048
 
-	b := make([]byte, uuidLen)
-	binary.BigEndian.PutUint64(b[:8], uint64(unixMicrosecond(tm)))
-	randSeed.Read(b[8:])
-	b[8] = (b[8] &^ 0x7) | byte(shardId>>8)
-	b[9] = byte(shardId)
-	return b
+	var u UUID
+	binary.BigEndian.PutUint64(u[:8], uint64(unixMicrosecond(tm)))
+	randSeed.Read(u[8:])
+	u[8] = (u[8] &^ 0x7) | byte(shardId>>8)
+	u[9] = byte(shardId)
+	return u
 }
 
 func ParseUUID(b []byte) (UUID, error) {
+	var u UUID
 	if len(b) != uuidHexLen {
-		return nil, fmt.Errorf("sharding: invalid UUID: %s", b)
+		return u, fmt.Errorf("sharding: invalid UUID: %s", b)
 	}
-	u := make([]byte, uuidLen)
 	hex.Decode(u[:4], b[:8])
 	hex.Decode(u[4:6], b[9:13])
 	hex.Decode(u[6:8], b[14:18])
@@ -47,35 +47,43 @@ func ParseUUID(b []byte) (UUID, error) {
 	return u, nil
 }
 
-func (u UUID) Split() (shardId int64, tm time.Time) {
-	b := []byte(u)
-	tm = fromUnixMicrosecond(int64(binary.BigEndian.Uint64(b[:8])))
-	shardId |= (int64(b[8]) & 0x7) << 8
-	shardId |= int64(b[9])
+func (u *UUID) IsZero() bool {
+	if u == nil {
+		return true
+	}
+	for _, c := range u {
+		if c != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func (u *UUID) Split() (shardId int64, tm time.Time) {
+	tm = fromUnixMicrosecond(int64(binary.BigEndian.Uint64(u[:8])))
+	shardId |= (int64(u[8]) & 0x7) << 8
+	shardId |= int64(u[9])
 	return
 }
 
-func (u UUID) ShardId() int64 {
+func (u *UUID) ShardId() int64 {
 	shardId, _ := u.Split()
 	return shardId
 }
 
-func (u UUID) Time() time.Time {
+func (u *UUID) Time() time.Time {
 	_, tm := u.Split()
 	return tm
 }
 
-func (u UUID) String() string {
+func (u *UUID) String() string {
 	b, _ := u.AppendValue(nil, 0)
 	return string(b)
 }
 
-func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
-	if u == nil {
+func (u *UUID) AppendValue(b []byte, quote int) ([]byte, error) {
+	if u.IsZero() {
 		return types.AppendNull(b, quote), nil
-	}
-	if len(u) != uuidLen {
-		return nil, fmt.Errorf("sharding: invalid UUID: % x", b)
 	}
 
 	if quote == 2 {
@@ -112,13 +120,21 @@ func (u UUID) Value() (driver.Value, error) {
 
 func (u *UUID) Scan(b interface{}) error {
 	if b == nil {
-		*u = nil
+		for i := range u {
+			u[i] = 0
+		}
+		return nil
 	}
+
 	uuid, err := ParseUUID(b.([]byte))
 	if err != nil {
 		return err
 	}
-	*u = uuid
+
+	for i, c := range uuid {
+		u[i] = c
+	}
+
 	return nil
 }
 

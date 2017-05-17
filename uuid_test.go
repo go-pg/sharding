@@ -24,7 +24,7 @@ func TestUUIDParse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(parsed, uuid) {
+	if !bytes.Equal(parsed[:], uuid[:]) {
 		t.Fatalf("got %x, wanted %x", parsed, uuid)
 	}
 }
@@ -61,13 +61,13 @@ func TestUUIDShard(t *testing.T) {
 func TestUUIDCollision(t *testing.T) {
 	tm := time.Now()
 	shard := int64(2047)
-	m := map[string]struct{}{}
+	m := map[[16]byte]struct{}{}
 	for i := 0; i < 1e6; i++ {
 		uuid := sharding.NewUUID(shard, tm)
-		_, ok := m[string(uuid)]
+		_, ok := m[uuid]
 		if ok {
 			t.Fatalf("collision for %s", uuid)
 		}
-		m[string(uuid)] = struct{}{}
+		m[uuid] = struct{}{}
 	}
 }
