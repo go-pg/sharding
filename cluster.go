@@ -76,11 +76,6 @@ func (cl *Cluster) Close() error {
 	return retErr
 }
 
-// DBIndex returns a db index for the shardId.
-func (cl *Cluster) DBIndex(shardId int64) int {
-	return int(shardId % int64(len(cl.dbs)))
-}
-
 // DBs returns list of unique databases in the cluster.
 func (cl *Cluster) DBs() []*pg.DB {
 	return cl.servers
