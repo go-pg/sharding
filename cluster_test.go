@@ -147,21 +147,6 @@ var _ = Describe("Cluster", func() {
 		}
 	})
 
-	It("distributes users on different servers", func() {
-		tests := []struct {
-			username string
-			wanted   *pg.DB
-		}{
-			{"a", db1},
-			{"b", db2},
-		}
-
-		for _, test := range tests {
-			shard := cluster.ShardString(test.username)
-			Expect(shard.Options()).To(Equal(test.wanted.Options()))
-		}
-	})
-
 	Describe("ForEachDB", func() {
 		It("fn is called once for every database", func() {
 			var dbs []*pg.DB

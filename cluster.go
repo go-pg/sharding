@@ -2,8 +2,6 @@ package sharding
 
 import (
 	"fmt"
-	"hash/fnv"
-	"io"
 	"strconv"
 	"sync"
 
@@ -76,9 +74,16 @@ func (cl *Cluster) Close() error {
 	return retErr
 }
 
-// DBs returns list of unique databases in the cluster.
+// DBs returns list of unique database servers in the cluster.
 func (cl *Cluster) DBs() []*pg.DB {
 	return cl.servers
+}
+
+// DB maps the number to the corresponding database server.
+func (cl *Cluster) DB(number int64) *pg.DB {
+	number = number % int64(len(cl.shards))
+	number = number % int64(len(cl.dbs))
+	return cl.dbs[number]
 }
 
 // Shards returns list of shards running in the db. If db is nil all
@@ -96,17 +101,10 @@ func (cl *Cluster) Shards(db *pg.DB) []*pg.DB {
 	return shards
 }
 
-// Shard maps the number to a shard in the cluster.
+// Shard maps the number to the corresponding shard.
 func (cl *Cluster) Shard(number int64) *pg.DB {
 	number = number % int64(len(cl.shards))
 	return cl.shards[number]
-}
-
-// ShardString maps the str to a shard in the cluster.
-func (cl *Cluster) ShardString(str string) *pg.DB {
-	h := fnv.New32a()
-	io.WriteString(h, str)
-	return cl.Shard(int64(h.Sum32()))
 }
 
 // SplitShard uses SplitId to extract shard id from the id and then
