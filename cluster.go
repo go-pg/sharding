@@ -74,9 +74,9 @@ func (cl *Cluster) Close() error {
 	return retErr
 }
 
-// DBs returns list of unique database servers in the cluster.
+// DBs returns list of database servers in the cluster.
 func (cl *Cluster) DBs() []*pg.DB {
-	return cl.servers
+	return cl.dbs
 }
 
 // DB maps the number to the corresponding database server.
