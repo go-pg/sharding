@@ -176,30 +176,27 @@ var _ = Describe("Cluster", func() {
 
 	Describe("ForEachShard", func() {
 		It("fn is called once for every shard", func() {
-			var shards []string
+			var shards []int
 			var mu sync.Mutex
-			err := cluster.ForEachShard(func(shard *pg.DB) error {
+			err := cluster.ForEachShard(func(shardId int, shard *pg.DB) error {
 				defer GinkgoRecover()
 
-				s := string(shard.FormatQuery(nil, "?shard_id"))
-
 				mu.Lock()
-				Expect(shards).NotTo(ContainElement(s))
-				shards = append(shards, s)
+				Expect(shards).NotTo(ContainElement(shardId))
+				shards = append(shards, shardId)
 				mu.Unlock()
 				return nil
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
-			for i := 0; i < 4; i++ {
-				Expect(shards).To(ContainElement(fmt.Sprintf("%d", i)))
+			for shardId := 0; shardId < 4; shardId++ {
+				Expect(shards).To(ContainElement(shardId))
 			}
 		})
 
 		It("returns an error if fn fails", func() {
-			err := cluster.ForEachShard(func(shard *pg.DB) error {
-				s := string(shard.FormatQuery(nil, "?shard_id"))
-				if s == "3" {
+			err := cluster.ForEachShard(func(shardId int, shard *pg.DB) error {
+				if shardId == 3 {
 					return errors.New("fake error")
 				}
 				return nil
@@ -210,30 +207,27 @@ var _ = Describe("Cluster", func() {
 
 	Describe("ForEachNShards", func() {
 		It("fn is called once for every shard", func() {
-			var shards []string
+			var shards []int
 			var mu sync.Mutex
-			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
+			err := cluster.ForEachNShards(2, func(shardId int, shard *pg.DB) error {
 				defer GinkgoRecover()
 
-				s := string(shard.FormatQuery(nil, "?shard_id"))
-
 				mu.Lock()
-				Expect(shards).NotTo(ContainElement(s))
-				shards = append(shards, s)
+				Expect(shards).NotTo(ContainElement(shardId))
+				shards = append(shards, shardId)
 				mu.Unlock()
 				return nil
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
-			for i := 0; i < 4; i++ {
-				Expect(shards).To(ContainElement(fmt.Sprintf("%d", i)))
+			for shardId := 0; shardId < 4; shardId++ {
+				Expect(shards).To(ContainElement(shardId))
 			}
 		})
 
 		It("returns an error if fn fails", func() {
-			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
-				s := string(shard.FormatQuery(nil, "?shard_id"))
-				if s == "3" {
+			err := cluster.ForEachNShards(2, func(shardId int, shard *pg.DB) error {
+				if shardId == 3 {
 					return errors.New("fake error")
 				}
 				return nil
