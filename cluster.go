@@ -142,7 +142,7 @@ func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 
 // ForEachShard concurrently calls the fn on each shard in the cluster.
 // It is the same as ForEachNShards(1, fn).
-func (cl *Cluster) ForEachShard(fn func(shardId int, shard *pg.DB) error) error {
+func (cl *Cluster) ForEachShard(fn func(shardId int64, shard *pg.DB) error) error {
 	return cl.ForEachDB(func(db *pg.DB) error {
 		var firstErr error
 		for i, shard := range cl.shards {
@@ -150,7 +150,7 @@ func (cl *Cluster) ForEachShard(fn func(shardId int, shard *pg.DB) error) error 
 				continue
 			}
 
-			if err := fn(i, shard); err != nil && firstErr == nil {
+			if err := fn(int64(i), shard); err != nil && firstErr == nil {
 				firstErr = err
 			}
 		}
@@ -159,7 +159,7 @@ func (cl *Cluster) ForEachShard(fn func(shardId int, shard *pg.DB) error) error 
 }
 
 // ForEachNShards concurrently calls the fn on each N shards in the cluster.
-func (cl *Cluster) ForEachNShards(n int, fn func(shardId int, shard *pg.DB) error) error {
+func (cl *Cluster) ForEachNShards(n int, fn func(shardId int64, shard *pg.DB) error) error {
 	return cl.ForEachDB(func(db *pg.DB) error {
 		var wg sync.WaitGroup
 		errCh := make(chan error, 1)
@@ -177,7 +177,7 @@ func (cl *Cluster) ForEachNShards(n int, fn func(shardId int, shard *pg.DB) erro
 					<-limit
 					wg.Done()
 				}()
-				if err := fn(i, shard); err != nil {
+				if err := fn(int64(i), shard); err != nil {
 					select {
 					case errCh <- err:
 					default:
