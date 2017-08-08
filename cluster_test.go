@@ -176,9 +176,9 @@ var _ = Describe("Cluster", func() {
 
 	Describe("ForEachShard", func() {
 		It("fn is called once for every shard", func() {
-			var shards []int
+			var shards []int64
 			var mu sync.Mutex
-			err := cluster.ForEachShard(func(shardId int, shard *pg.DB) error {
+			err := cluster.ForEachShard(func(shardId int64, shard *pg.DB) error {
 				defer GinkgoRecover()
 
 				mu.Lock()
@@ -190,12 +190,12 @@ var _ = Describe("Cluster", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
 			for shardId := 0; shardId < 4; shardId++ {
-				Expect(shards).To(ContainElement(shardId))
+				Expect(shards).To(ContainElement(int64(shardId)))
 			}
 		})
 
 		It("returns an error if fn fails", func() {
-			err := cluster.ForEachShard(func(shardId int, shard *pg.DB) error {
+			err := cluster.ForEachShard(func(shardId int64, shard *pg.DB) error {
 				if shardId == 3 {
 					return errors.New("fake error")
 				}
@@ -207,9 +207,9 @@ var _ = Describe("Cluster", func() {
 
 	Describe("ForEachNShards", func() {
 		It("fn is called once for every shard", func() {
-			var shards []int
+			var shards []int64
 			var mu sync.Mutex
-			err := cluster.ForEachNShards(2, func(shardId int, shard *pg.DB) error {
+			err := cluster.ForEachNShards(2, func(shardId int64, shard *pg.DB) error {
 				defer GinkgoRecover()
 
 				mu.Lock()
@@ -221,12 +221,12 @@ var _ = Describe("Cluster", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
 			for shardId := 0; shardId < 4; shardId++ {
-				Expect(shards).To(ContainElement(shardId))
+				Expect(shards).To(ContainElement(int64(shardId)))
 			}
 		})
 
 		It("returns an error if fn fails", func() {
-			err := cluster.ForEachNShards(2, func(shardId int, shard *pg.DB) error {
+			err := cluster.ForEachNShards(2, func(shardId int64, shard *pg.DB) error {
 				if shardId == 3 {
 					return errors.New("fake error")
 				}
