@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/types"
@@ -14,7 +15,11 @@ import (
 type Cluster struct {
 	dbs, servers []*pg.DB
 	shards       []*pg.DB
+	splitIdFunc  SplitIdFunc
 }
+
+// SplitIdFunc splits id into time, shard id, and sequence id.
+type SplitIdFunc func(id int64) (tm time.Time, shardId int64, seqId int64)
 
 // NewCluster returns new PostgreSQL cluster consisting of physical
 // dbs and running nshards logical shards.
@@ -37,6 +42,8 @@ func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
 	cl := &Cluster{
 		dbs:    dbs,
 		shards: make([]*pg.DB, nshards),
+
+		splitIdFunc: SplitId,
 	}
 	cl.init()
 	return cl
@@ -107,10 +114,18 @@ func (cl *Cluster) Shard(number int64) *pg.DB {
 	return cl.shards[number]
 }
 
+func (cl *Cluster) SplitIdFunc() SplitIdFunc {
+	return cl.splitIdFunc
+}
+
+func (cl *Cluster) SetSplitIdFunc(fn SplitIdFunc) {
+	cl.splitIdFunc = fn
+}
+
 // SplitShard uses SplitId to extract shard id from the id and then
 // returns corresponding cluster Shard.
 func (cl *Cluster) SplitShard(id int64) *pg.DB {
-	_, shardId, _ := SplitId(id)
+	_, shardId, _ := cl.SplitIdFunc()(id)
 	return cl.Shard(shardId)
 }
 
