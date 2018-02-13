@@ -77,13 +77,12 @@ func (u *UUID) Time() time.Time {
 }
 
 func (u UUID) String() string {
-	b, _ := u.AppendValue(nil, 0)
-	return string(b)
+	return string(u.AppendValue(nil, 0))
 }
 
-func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
+func (u UUID) AppendValue(b []byte, quote int) []byte {
 	if u.IsZero() {
-		return types.AppendNull(b, quote), nil
+		return types.AppendNull(b, quote)
 	}
 
 	if quote == 2 {
@@ -111,7 +110,7 @@ func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
 		b = append(b, '\'')
 	}
 
-	return b, nil
+	return b
 }
 
 func (u UUID) Value() (driver.Value, error) {
