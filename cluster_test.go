@@ -22,12 +22,16 @@ func TestGinkgo(t *testing.T) {
 
 var _ = Describe("named params", func() {
 	var cluster *sharding.Cluster
+	var err error
 
 	BeforeEach(func() {
 		db := pg.Connect(&pg.Options{
 			User: "postgres",
 		})
-		cluster = sharding.NewCluster([]*pg.DB{db}, 4)
+		cluster, err = sharding.NewCluster([]*pg.DB{db}, 4)
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	It("supports ?shard", func() {
@@ -64,6 +68,7 @@ var _ = Describe("named params", func() {
 var _ = Describe("Cluster", func() {
 	var db1, db2 *pg.DB
 	var cluster *sharding.Cluster
+	var err error
 
 	BeforeEach(func() {
 		db1 = pg.Connect(&pg.Options{
@@ -73,7 +78,10 @@ var _ = Describe("Cluster", func() {
 			Addr: "db2",
 		})
 		Expect(db1).NotTo(Equal(db2))
-		cluster = sharding.NewCluster([]*pg.DB{db1, db2, db1, db2}, 4)
+		cluster, err = sharding.NewCluster([]*pg.DB{db1, db2, db1, db2}, 4)
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	AfterEach(func() {
@@ -118,7 +126,10 @@ var _ = Describe("Cluster", func() {
 			for _, ind := range test.dbs {
 				cldbs = append(cldbs, dbs[ind])
 			}
-			cluster = sharding.NewCluster(cldbs, 8)
+			cluster, err = sharding.NewCluster(cldbs, 8)
+			if err != nil {
+				panic(err)
+			}
 
 			var ss []string
 			for _, shard := range cluster.Shards(dbs[test.db]) {

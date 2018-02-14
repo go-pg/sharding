@@ -84,7 +84,10 @@ func ExampleCluster() {
 	dbs := []*pg.DB{db} // list of physical PostgreSQL servers
 	nshards := 2        // 2 logical shards
 	// Create cluster with 1 physical server and 2 logical shards.
-	cluster := sharding.NewCluster(dbs, nshards)
+	cluster, err := sharding.NewCluster(dbs, nshards)
+    if err != nil {
+        panic(err)
+    }
 
 	// Create database schema for our logical shards.
 	for i := 0; i < nshards; i++ {
@@ -99,7 +102,7 @@ func ExampleCluster() {
 		AccountId: 1,
 		Emails:    []string{"user1@domain"},
 	}
-	err := CreateUser(cluster, user1)
+	err = CreateUser(cluster, user1)
 	if err != nil {
 		panic(err)
 	}

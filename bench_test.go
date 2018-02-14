@@ -41,7 +41,10 @@ func BenchmarkCluster(b *testing.B) {
 	db := benchmarkDB()
 	defer db.Close()
 
-	cluster := sharding.NewCluster([]*pg.DB{db}, 1)
+	cluster, err := sharding.NewCluster([]*pg.DB{db}, 1)
+	if err != nil {
+		b.Error(err)
+	}
 	defer cluster.Close()
 
 	b.ResetTimer()
