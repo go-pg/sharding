@@ -1,12 +1,20 @@
 package sharding
 
 import (
-	"fmt"
 	"strconv"
 	"sync"
 
+	"errors"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/types"
+)
+
+var (
+	ErrDBRequired                = errors.New("at least one db is required")
+	ErrShardRequired             = errors.New("at least on shard is required")
+	ErrTooManyShards             = errors.New("too many shards")
+	ErrTooFewShards              = errors.New("number of shards must be greater or equal number of dbs")
+	ErrShardsNumberNotDivideable = errors.New("number of shards must be divideable by number of dbs")
 )
 
 // Cluster maps many (up to 8198) logical database shards implemented
@@ -18,28 +26,28 @@ type Cluster struct {
 
 // NewCluster returns new PostgreSQL cluster consisting of physical
 // dbs and running nshards logical shards.
-func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
+func NewCluster(dbs []*pg.DB, nshards int) (*Cluster, error) {
 	if len(dbs) == 0 {
-		panic("at least one db is required")
+		return nil, ErrDBRequired
 	}
 	if nshards == 0 {
-		panic("at least on shard is required")
+		return nil, ErrShardRequired
 	}
 	if len(dbs) > int(shardMask+1) || nshards > int(shardMask+1) {
-		panic(fmt.Sprintf("too many shards"))
+		return nil, ErrTooManyShards
 	}
 	if nshards < len(dbs) {
-		panic("number of shards must be greater or equal number of dbs")
+		return nil, ErrTooFewShards
 	}
 	if nshards%len(dbs) != 0 {
-		panic("number of shards must be divideable by number of dbs")
+		return nil, ErrShardsNumberNotDivideable
 	}
 	cl := &Cluster{
 		dbs:    dbs,
 		shards: make([]*pg.DB, nshards),
 	}
 	cl.init()
-	return cl
+	return cl, nil
 }
 
 func (cl *Cluster) init() {
