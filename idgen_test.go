@@ -11,20 +11,20 @@ import (
 func TestMinIdMaxId(t *testing.T) {
 	tm := time.Unix(1262304000, 0)
 
-	minId := sharding.MinIdTime(tm)
+	minId := sharding.MinId(tm)
 	const wantedMinId = 0
 	if minId != wantedMinId {
 		t.Errorf("got %d, wanted %d", minId, wantedMinId)
 	}
 
-	maxId := sharding.MaxIdTime(tm)
+	maxId := sharding.MaxId(tm)
 	const wantedMaxId = 8388607
 	if maxId != wantedMaxId {
 		t.Errorf("got %d, wanted %d", maxId, wantedMaxId)
 	}
 }
 
-func TestMinId(t *testing.T) {
+func TestNextTime(t *testing.T) {
 	minTime := time.Date(1975, time.February, 28, 4, 6, 12, 224000000, time.UTC)
 
 	var tests = []struct {
@@ -58,19 +58,19 @@ func TestMinId(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		minId := sharding.MinIdTime(test.tm)
+		minId := sharding.NewShardIdGen(0, nil).NextId(test.tm)
 		if minId != test.wantedId {
 			t.Errorf("got %d, wanted %d", minId, test.wantedId)
 		}
 	}
 }
 
-func TestTime(t *testing.T) {
-	g := sharding.NewIdGen(2049)
+func TestNextTimeBounds(t *testing.T) {
+	gen := sharding.NewShardIdGen(2049, nil)
 	prev := int64(math.MinInt64)
 	for i := 1976; i <= 2044; i++ {
 		tm := time.Date(i, time.January, 01, 0, 0, 0, 0, time.UTC)
-		next := g.NextTime(tm)
+		next := gen.NextId(tm)
 		if next <= prev {
 			t.Errorf("%s: next=%d, prev=%d", tm, next, prev)
 		}
@@ -81,9 +81,9 @@ func TestTime(t *testing.T) {
 func TestShard(t *testing.T) {
 	tm := time.Now()
 	for shard := int64(0); shard < 2048; shard++ {
-		gen := sharding.NewIdGen(shard)
-		id := gen.NextTime(tm)
-		gotTm, gotShard, gotSeq := sharding.SplitId(id)
+		gen := sharding.NewShardIdGen(shard, nil)
+		id := gen.NextId(tm)
+		gotTm, gotShard, gotSeq := gen.SplitId(id)
 		if gotTm.Unix() != tm.Unix() {
 			t.Errorf("got %s, expected %s", gotTm, tm)
 		}
@@ -97,13 +97,13 @@ func TestShard(t *testing.T) {
 }
 
 func TestSequence(t *testing.T) {
-	g := sharding.NewIdGen(0)
+	gen := sharding.NewShardIdGen(0, nil)
 	tm := time.Now()
-	max := g.MaxTime(tm)
+	max := gen.MaxId(tm)
 
 	var prev int64
 	for i := 0; i < 4096; i++ {
-		next := g.NextTime(tm)
+		next := gen.NextId(tm)
 		if next <= prev {
 			t.Errorf("iter %d: next=%d prev=%d", i, next, prev)
 		}
@@ -115,12 +115,14 @@ func TestSequence(t *testing.T) {
 }
 
 func TestCollision(t *testing.T) {
-	tm := time.Now()
-	m := map[int64]struct{}{}
+	const n = 4096
 
-	gen := sharding.NewIdGen(1)
-	for i := 0; i < 4096; i++ {
-		id := gen.NextTime(tm)
+	tm := time.Now()
+	m := make(map[int64]struct{}, 2*n)
+
+	gen := sharding.NewShardIdGen(0, nil)
+	for i := 0; i < n; i++ {
+		id := gen.NextId(tm)
 		_, ok := m[id]
 		if ok {
 			t.Fatalf("collision for %d", id)
@@ -128,9 +130,9 @@ func TestCollision(t *testing.T) {
 		m[id] = struct{}{}
 	}
 
-	gen = sharding.NewIdGen(2)
-	for i := 0; i < 4096; i++ {
-		id := gen.NextTime(tm)
+	gen = sharding.NewShardIdGen(1, nil)
+	for i := 0; i < n; i++ {
+		id := gen.NextId(tm)
 		_, ok := m[id]
 		if ok {
 			t.Fatalf("collision for %d", id)

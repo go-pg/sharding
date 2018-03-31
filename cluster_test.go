@@ -45,11 +45,11 @@ var _ = Describe("named params", func() {
 		Expect(shardId).To(Equal(3))
 	})
 
-	It("support ?epoch", func() {
-		var epoch int
+	It("supports ?epoch", func() {
+		var epoch int64
 		_, err := cluster.Shard(0).QueryOne(pg.Scan(&epoch), "SELECT ?epoch")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(epoch).To(Equal(1262304000000))
+		Expect(epoch).To(Equal(int64(1262304000000)))
 	})
 
 	It("supports UUID", func() {

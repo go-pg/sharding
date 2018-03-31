@@ -12,20 +12,22 @@ import (
 // Cluster maps many (up to 8198) logical database shards implemented
 // using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
-	dbs, servers []*pg.DB
-	shards       []*pg.DB
+	gen     *IdGen
+	servers []*pg.DB
+	dbs     []*pg.DB
+	shards  []*pg.DB
 }
 
-// NewCluster returns new PostgreSQL cluster consisting of physical
+// NewClusterWithGen returns new PostgreSQL cluster consisting of physical
 // dbs and running nshards logical shards.
-func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
+func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
 	if len(dbs) == 0 {
 		panic("at least one db is required")
 	}
 	if nshards == 0 {
 		panic("at least on shard is required")
 	}
-	if len(dbs) > int(shardMask+1) || nshards > int(shardMask+1) {
+	if len(dbs) > int(gen.shardMask+1) || nshards > int(gen.shardMask+1) {
 		panic(fmt.Sprintf("too many shards"))
 	}
 	if nshards < len(dbs) {
@@ -35,11 +37,16 @@ func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
 		panic("number of shards must be divideable by number of dbs")
 	}
 	cl := &Cluster{
+		gen:    gen,
 		dbs:    dbs,
 		shards: make([]*pg.DB, nshards),
 	}
 	cl.init()
 	return cl
+}
+
+func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
+	return NewClusterWithGen(dbs, nshards, defaultIdGen)
 }
 
 func (cl *Cluster) init() {
@@ -53,15 +60,22 @@ func (cl *Cluster) init() {
 	}
 
 	for i := 0; i < len(cl.shards); i++ {
-		cl.shards[i] = newShard(cl.dbs[i%len(cl.dbs)], int64(i))
+		cl.shards[i] = cl.newShard(cl.dbs[i%len(cl.dbs)], int64(i))
 	}
 }
 
-func newShard(db *pg.DB, id int64) *pg.DB {
+// SplitShard uses SplitId to extract shard id from the id and then
+// returns corresponding cluster Shard.
+func (cl *Cluster) SplitShard(id int64) *pg.DB {
+	_, shardId, _ := SplitId(id)
+	return cl.Shard(shardId)
+}
+
+func (cl *Cluster) newShard(db *pg.DB, id int64) *pg.DB {
 	name := "shard" + strconv.FormatInt(id, 10)
 	return db.WithParam("shard_id", id).
 		WithParam("shard", types.F(name)).
-		WithParam("epoch", epoch)
+		WithParam("epoch", cl.gen.epoch)
 }
 
 func (cl *Cluster) Close() error {
@@ -105,13 +119,6 @@ func (cl *Cluster) Shards(db *pg.DB) []*pg.DB {
 func (cl *Cluster) Shard(number int64) *pg.DB {
 	number = number % int64(len(cl.shards))
 	return cl.shards[number]
-}
-
-// SplitShard uses SplitId to extract shard id from the id and then
-// returns corresponding cluster Shard.
-func (cl *Cluster) SplitShard(id int64) *pg.DB {
-	_, shardId, _ := SplitId(id)
-	return cl.Shard(shardId)
 }
 
 // ForEachDB concurrently calls the fn on each database in the cluster.
