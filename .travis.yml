@@ -1,15 +1,12 @@
-sudo: false
+dist: trusty
 language: go
 
-services:
-- postgresql
-
 addons:
-  postgresql: "9.4"
+  postgresql: "9.6"
 
 go:
-  - 1.7
-  - 1.8
+  - 1.9.x
+  - 1.10.x
   - tip
 
 matrix:

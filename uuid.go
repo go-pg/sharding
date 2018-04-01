@@ -24,7 +24,7 @@ var _ sql.Scanner = (*UUID)(nil)
 var _ driver.Valuer = (*UUID)(nil)
 
 func NewUUID(shardId int64, tm time.Time) UUID {
-	shardId = shardId % 2048
+	shardId = shardId % maxShards
 
 	var u UUID
 	binary.BigEndian.PutUint64(u[:8], uint64(unixMicrosecond(tm)))
