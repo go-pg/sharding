@@ -269,6 +269,9 @@ var _ = Describe("Cluster", func() {
 
 				{cluster.SubCluster(0, 8), []int{0, 1, 2, 3, 4, 5, 6, 7}},
 				{cluster.SubCluster(1, 8), []int{0, 1, 2, 3, 4, 5, 6, 7}},
+
+				{cluster.SubCluster(0, 16), []int{0, 1, 2, 3, 4, 5, 6, 7}},
+				{cluster.SubCluster(1, 16), []int{0, 1, 2, 3, 4, 5, 6, 7}},
 			}
 			for _, test := range tests {
 				var mu sync.Mutex

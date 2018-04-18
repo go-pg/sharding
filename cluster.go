@@ -212,6 +212,9 @@ type SubCluster struct {
 
 // SubCluster returns a subset of the cluster of the given size.
 func (cl *Cluster) SubCluster(number int64, size int) *SubCluster {
+	if size > len(cl.shards) {
+		size = len(cl.shards)
+	}
 	step := len(cl.shards) / size
 	clusterId := int(number%int64(step)) * size
 	shards := make([]*pg.DB, 0, size)
