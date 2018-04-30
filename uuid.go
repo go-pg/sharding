@@ -24,7 +24,7 @@ var _ sql.Scanner = (*UUID)(nil)
 var _ driver.Valuer = (*UUID)(nil)
 
 func NewUUID(shardId int64, tm time.Time) UUID {
-	shardId = shardId % maxShards
+	shardId = shardId % int64(DefaultIdGen.NumShards())
 
 	var u UUID
 	binary.BigEndian.PutUint64(u[:8], uint64(unixMicrosecond(tm)))
@@ -39,11 +39,26 @@ func ParseUUID(b []byte) (UUID, error) {
 	if len(b) != uuidHexLen {
 		return u, fmt.Errorf("sharding: invalid UUID: %s", b)
 	}
-	hex.Decode(u[:4], b[:8])
-	hex.Decode(u[4:6], b[9:13])
-	hex.Decode(u[6:8], b[14:18])
-	hex.Decode(u[8:10], b[19:23])
-	hex.Decode(u[10:], b[24:])
+	_, err := hex.Decode(u[:4], b[:8])
+	if err != nil {
+		return u, err
+	}
+	_, err = hex.Decode(u[4:6], b[9:13])
+	if err != nil {
+		return u, err
+	}
+	_, err = hex.Decode(u[6:8], b[14:18])
+	if err != nil {
+		return u, err
+	}
+	_, err = hex.Decode(u[8:10], b[19:23])
+	if err != nil {
+		return u, err
+	}
+	_, err = hex.Decode(u[10:], b[24:])
+	if err != nil {
+		return u, err
+	}
 	return u, nil
 }
 

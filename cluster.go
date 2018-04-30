@@ -9,7 +9,7 @@ import (
 	"github.com/go-pg/pg/types"
 )
 
-// Cluster maps many (up to 8198) logical database shards implemented
+// Cluster maps many (up to 2048) logical database shards implemented
 // using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
 	gen     *IdGen
@@ -21,13 +21,16 @@ type Cluster struct {
 // NewClusterWithGen returns new PostgreSQL cluster consisting of physical
 // dbs and running nshards logical shards.
 func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
+	if gen == nil {
+		gen = DefaultIdGen
+	}
 	if len(dbs) == 0 {
 		panic("at least one db is required")
 	}
 	if nshards == 0 {
 		panic("at least on shard is required")
 	}
-	if len(dbs) > int(gen.shardMask+1) || nshards > int(gen.shardMask+1) {
+	if len(dbs) > gen.NumShards() || nshards > gen.NumShards() {
 		panic(fmt.Sprintf("too many shards"))
 	}
 	if nshards < len(dbs) {
@@ -46,7 +49,7 @@ func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
 }
 
 func NewCluster(dbs []*pg.DB, nshards int) *Cluster {
-	return NewClusterWithGen(dbs, nshards, defaultIdGen)
+	return NewClusterWithGen(dbs, nshards, nil)
 }
 
 func (cl *Cluster) init() {

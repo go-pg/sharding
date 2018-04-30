@@ -6,7 +6,10 @@ import (
 	"time"
 )
 
-const maxShards = 2048
+var (
+	epoch        = time.Date(2010, time.January, 01, 00, 0, 0, 0, time.UTC)
+	DefaultIdGen = NewIdGen(41, 11, 12, epoch)
+)
 
 type IdGen struct {
 	shardBits uint
@@ -31,6 +34,10 @@ func NewIdGen(timeBits, shardBits, seqBits uint, epoch time.Time) *IdGen {
 		shardMask: int64(1)<<shardBits - 1,
 		seqMask:   int64(1)<<seqBits - 1,
 	}
+}
+
+func (g *IdGen) NumShards() int {
+	return int(g.shardMask) + 1
 }
 
 // NextId returns incremental id for the time. Note that you can only
@@ -68,24 +75,19 @@ func (g *IdGen) SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
 
 //------------------------------------------------------------------------------
 
-var (
-	epoch        = time.Date(2010, time.January, 01, 00, 0, 0, 0, time.UTC)
-	defaultIdGen = NewIdGen(41, 11, 12, epoch)
-)
-
 // SplitId splits id into time, shard id, and sequence id.
 func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
-	return defaultIdGen.SplitId(id)
+	return DefaultIdGen.SplitId(id)
 }
 
 // MinId returns min id for the time.
 func MinId(tm time.Time) int64 {
-	return defaultIdGen.NextId(tm, 0, 0)
+	return DefaultIdGen.NextId(tm, 0, 0)
 }
 
 // MaxId returns max id for the time.
 func MaxId(tm time.Time) int64 {
-	return defaultIdGen.MaxId(tm, defaultIdGen.shardMask)
+	return DefaultIdGen.MaxId(tm, DefaultIdGen.shardMask)
 }
 
 //------------------------------------------------------------------------------
@@ -106,10 +108,10 @@ type ShardIdGen struct {
 // NewShardIdGen returns id generator for the shard.
 func NewShardIdGen(shard int64, gen *IdGen) *ShardIdGen {
 	if gen == nil {
-		gen = defaultIdGen
+		gen = DefaultIdGen
 	}
 	return &ShardIdGen{
-		shard: shard % (int64(1) << gen.shardBits),
+		shard: shard % int64(gen.NumShards()),
 		gen:   gen,
 	}
 }
