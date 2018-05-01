@@ -1,6 +1,7 @@
 package sharding_test
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 
@@ -52,6 +53,23 @@ func BenchmarkCluster(b *testing.B) {
 			if err != nil {
 				b.Fatal(err)
 			}
+		}
+	})
+}
+
+var sink *sharding.SubCluster
+
+func BenchmarkSubCluster(b *testing.B) {
+	db := benchmarkDB()
+	defer db.Close()
+
+	cluster := sharding.NewCluster([]*pg.DB{db}, 1)
+	defer cluster.Close()
+
+	b.RunParallel(func(pb *testing.PB) {
+		n := rand.Int63()
+		for pb.Next() {
+			sink = cluster.SubCluster(n, 32)
 		}
 	})
 }

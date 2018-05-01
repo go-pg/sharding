@@ -220,9 +220,9 @@ func (cl *Cluster) SubCluster(number int64, size int) *SubCluster {
 	}
 	step := len(cl.shards) / size
 	clusterId := int(number%int64(step)) * size
-	shards := make([]*pg.DB, 0, size)
+	shards := make([]*pg.DB, size)
 	for i := 0; i < size; i++ {
-		shards = append(shards, cl.shards[clusterId+i])
+		shards[i] = cl.shards[clusterId+i]
 	}
 
 	return &SubCluster{
