@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -95,26 +94,26 @@ var _ = Describe("Cluster", func() {
 		tests := []struct {
 			dbs    []int
 			db     int
-			shards []int
+			shards []int64
 		}{
-			{[]int{0}, 0, []int{0, 1, 2, 3, 4, 5, 6, 7}},
+			{[]int{0}, 0, []int64{0, 1, 2, 3, 4, 5, 6, 7}},
 
-			{[]int{0, 1}, 0, []int{0, 2, 4, 6}},
-			{[]int{0, 1}, 1, []int{1, 3, 5, 7}},
+			{[]int{0, 1}, 0, []int64{0, 2, 4, 6}},
+			{[]int{0, 1}, 1, []int64{1, 3, 5, 7}},
 
-			{[]int{0, 1, 2, 3}, 0, []int{0, 4}},
-			{[]int{0, 1, 2, 3}, 1, []int{1, 5}},
-			{[]int{0, 1, 2, 3}, 2, []int{2, 6}},
-			{[]int{0, 1, 2, 3}, 3, []int{3, 7}},
+			{[]int{0, 1, 2, 3}, 0, []int64{0, 4}},
+			{[]int{0, 1, 2, 3}, 1, []int64{1, 5}},
+			{[]int{0, 1, 2, 3}, 2, []int64{2, 6}},
+			{[]int{0, 1, 2, 3}, 3, []int64{3, 7}},
 
-			{[]int{0, 1, 2, 1}, 0, []int{0, 4}},
-			{[]int{0, 1, 2, 1}, 1, []int{1, 3, 5, 7}},
-			{[]int{0, 1, 2, 1}, 2, []int{2, 6}},
+			{[]int{0, 1, 2, 1}, 0, []int64{0, 4}},
+			{[]int{0, 1, 2, 1}, 1, []int64{1, 3, 5, 7}},
+			{[]int{0, 1, 2, 1}, 2, []int64{2, 6}},
 
-			{[]int{0, 1, 2, 3}, 0, []int{0, 4}},
-			{[]int{0, 1, 2, 3}, 1, []int{1, 5}},
-			{[]int{0, 1, 2, 3}, 2, []int{2, 6}},
-			{[]int{0, 1, 2, 3}, 3, []int{3, 7}},
+			{[]int{0, 1, 2, 3}, 0, []int64{0, 4}},
+			{[]int{0, 1, 2, 3}, 1, []int64{1, 5}},
+			{[]int{0, 1, 2, 3}, 2, []int64{2, 6}},
+			{[]int{0, 1, 2, 3}, 3, []int64{3, 7}},
 		}
 		for _, test := range tests {
 			var cldbs []*pg.DB
@@ -123,7 +122,7 @@ var _ = Describe("Cluster", func() {
 			}
 			cluster = sharding.NewCluster(cldbs, 8)
 
-			var shardIds []int
+			var shardIds []int64
 			for _, shard := range cluster.Shards(dbs[test.db]) {
 				shardIds = append(shardIds, shardId(shard))
 			}
@@ -178,7 +177,7 @@ var _ = Describe("Cluster", func() {
 
 	Describe("ForEachShard", func() {
 		It("fn is called once for every shard", func() {
-			var shards []int
+			var shards []int64
 			var mu sync.Mutex
 			err := cluster.ForEachShard(func(shard *pg.DB) error {
 				defer GinkgoRecover()
@@ -191,7 +190,7 @@ var _ = Describe("Cluster", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
-			for shardId := 0; shardId < 4; shardId++ {
+			for shardId := int64(0); shardId < 4; shardId++ {
 				Expect(shards).To(ContainElement(shardId))
 			}
 		})
@@ -209,7 +208,7 @@ var _ = Describe("Cluster", func() {
 
 	Describe("ForEachNShards", func() {
 		It("fn is called once for every shard", func() {
-			var shards []int
+			var shards []int64
 			var mu sync.Mutex
 			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
 				defer GinkgoRecover()
@@ -223,7 +222,7 @@ var _ = Describe("Cluster", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
-			for shardId := 0; shardId < 4; shardId++ {
+			for shardId := int64(0); shardId < 4; shardId++ {
 				Expect(shards).To(ContainElement(shardId))
 			}
 		})
@@ -255,27 +254,27 @@ var _ = Describe("Cluster", func() {
 		It("creates sub-cluster", func() {
 			tests := []struct {
 				subcl    *sharding.SubCluster
-				shardIds []int
+				shardIds []int64
 			}{
-				{cluster.SubCluster(0, 2), []int{0, 1}},
-				{cluster.SubCluster(1, 2), []int{2, 3}},
-				{cluster.SubCluster(2, 2), []int{4, 5}},
-				{cluster.SubCluster(3, 2), []int{6, 7}},
-				{cluster.SubCluster(4, 2), []int{0, 1}},
+				{cluster.SubCluster(0, 2), []int64{0, 1}},
+				{cluster.SubCluster(1, 2), []int64{2, 3}},
+				{cluster.SubCluster(2, 2), []int64{4, 5}},
+				{cluster.SubCluster(3, 2), []int64{6, 7}},
+				{cluster.SubCluster(4, 2), []int64{0, 1}},
 
-				{cluster.SubCluster(0, 4), []int{0, 1, 2, 3}},
-				{cluster.SubCluster(1, 4), []int{4, 5, 6, 7}},
-				{cluster.SubCluster(2, 4), []int{0, 1, 2, 3}},
+				{cluster.SubCluster(0, 4), []int64{0, 1, 2, 3}},
+				{cluster.SubCluster(1, 4), []int64{4, 5, 6, 7}},
+				{cluster.SubCluster(2, 4), []int64{0, 1, 2, 3}},
 
-				{cluster.SubCluster(0, 8), []int{0, 1, 2, 3, 4, 5, 6, 7}},
-				{cluster.SubCluster(1, 8), []int{0, 1, 2, 3, 4, 5, 6, 7}},
+				{cluster.SubCluster(0, 8), []int64{0, 1, 2, 3, 4, 5, 6, 7}},
+				{cluster.SubCluster(1, 8), []int64{0, 1, 2, 3, 4, 5, 6, 7}},
 
-				{cluster.SubCluster(0, 16), []int{0, 1, 2, 3, 4, 5, 6, 7}},
-				{cluster.SubCluster(1, 16), []int{0, 1, 2, 3, 4, 5, 6, 7}},
+				{cluster.SubCluster(0, 16), []int64{0, 1, 2, 3, 4, 5, 6, 7}},
+				{cluster.SubCluster(1, 16), []int64{0, 1, 2, 3, 4, 5, 6, 7}},
 			}
 			for _, test := range tests {
 				var mu sync.Mutex
-				var shardIds []int
+				var shardIds []int64
 				dbs := make(map[*pg.Options]struct{})
 				err := test.subcl.ForEachShard(func(shard *pg.DB) error {
 					mu.Lock()
@@ -285,12 +284,14 @@ var _ = Describe("Cluster", func() {
 					return nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-				sort.Ints(shardIds)
+				sort.Slice(shardIds, func(i, j int) bool {
+					return shardIds[i] < shardIds[j]
+				})
 				Expect(shardIds).To(Equal(test.shardIds))
 				Expect(len(dbs)).To(Equal(min(len(alldbs), len(shardIds))))
 
 				shardIds = shardIds[:0]
-				add := func(shardId int) {
+				add := func(shardId int64) {
 					for _, id := range shardIds {
 						if id == shardId {
 							return
@@ -311,11 +312,8 @@ var _ = Describe("Cluster", func() {
 	})
 })
 
-func shardId(shard *pg.DB) int {
-	s := string(shard.FormatQuery(nil, "?shard_id"))
-	shardId, err := strconv.Atoi(s)
-	Expect(err).NotTo(HaveOccurred())
-	return shardId
+func shardId(shard *pg.DB) int64 {
+	return shard.Param("shard_id").(int64)
 }
 
 func min(a, b int) int {
