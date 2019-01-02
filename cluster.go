@@ -70,7 +70,7 @@ func (cl *Cluster) init() {
 func (cl *Cluster) newShard(db *pg.DB, id int64) *pg.DB {
 	name := "shard" + strconv.FormatInt(id, 10)
 	return db.WithParam("shard_id", id).
-		WithParam("shard", types.F(name)).
+		WithParam("shard", types.Q(name)).
 		WithParam("epoch", cl.gen.epoch)
 }
 

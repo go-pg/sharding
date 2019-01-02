@@ -36,7 +36,7 @@ var _ = Describe("named params", func() {
 		_, err := cluster.Shard(3).QueryOne(
 			pg.Scan(&shardName, &hello), `SELECT '?shard', ?`, "hello")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(shardName).To(Equal(`"shard3"`))
+		Expect(shardName).To(Equal("shard3"))
 		Expect(hello).To(Equal("hello"))
 	})
 
