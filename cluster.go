@@ -91,9 +91,10 @@ func (cl *Cluster) DBs() []*pg.DB {
 
 // DB maps the number to the corresponding database server.
 func (cl *Cluster) DB(number int64) *pg.DB {
-	number = number % int64(len(cl.shards))
-	number = number % int64(len(cl.dbs))
-	return cl.dbs[number]
+	idx := uint64(number)
+	idx %= uint64(len(cl.shards))
+	idx %= uint64(len(cl.dbs))
+	return cl.dbs[idx]
 }
 
 // Shards returns list of shards running in the db. If db is nil all
@@ -113,8 +114,8 @@ func (cl *Cluster) Shards(db *pg.DB) []*pg.DB {
 
 // Shard maps the number to the corresponding shard in the cluster.
 func (cl *Cluster) Shard(number int64) *pg.DB {
-	number = number % int64(len(cl.shards))
-	return cl.shards[number]
+	idx := uint64(number) % uint64(len(cl.shards))
+	return cl.shards[idx]
 }
 
 // SplitShard uses SplitId to extract shard id from the id and then
@@ -219,7 +220,7 @@ func (cl *Cluster) SubCluster(number int64, size int) *SubCluster {
 		size = len(cl.shards)
 	}
 	step := len(cl.shards) / size
-	clusterId := int(number%int64(step)) * size
+	clusterId := int(uint64(number)%uint64(step)) * size
 	shards := make([]*pg.DB, size)
 	for i := 0; i < size; i++ {
 		shards[i] = cl.shards[clusterId+i]
@@ -240,8 +241,8 @@ func (cl *SubCluster) SplitShard(id int64) *pg.DB {
 
 // Shard maps the number to the corresponding shard in the subscluster.
 func (cl *SubCluster) Shard(number int64) *pg.DB {
-	number = number % int64(len(cl.shards))
-	return cl.shards[number]
+	idx := uint64(number) % uint64(len(cl.shards))
+	return cl.shards[idx]
 }
 
 // ForEachShard concurrently calls the fn on each shard in the subcluster.
