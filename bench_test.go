@@ -73,3 +73,13 @@ func BenchmarkSubCluster(b *testing.B) {
 		}
 	})
 }
+
+func BenchmarkNewUUID(b *testing.B) {
+	tm := time.Now()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = sharding.NewUUID(0, tm)
+		}
+	})
+}
