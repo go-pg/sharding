@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/go-pg/pg/types"
@@ -15,7 +16,10 @@ import (
 const uuidLen = 16
 const uuidHexLen = 36
 
-var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
+var (
+	uuidRandMu sync.Mutex
+	uuidRand   = rand.New(rand.NewSource(time.Now().UnixNano()))
+)
 
 type UUID [uuidLen]byte
 
@@ -28,7 +32,9 @@ func NewUUID(shardId int64, tm time.Time) UUID {
 
 	var u UUID
 	binary.BigEndian.PutUint64(u[:8], uint64(unixMicrosecond(tm)))
-	randSeed.Read(u[8:])
+	uuidRandMu.Lock()
+	uuidRand.Read(u[8:])
+	uuidRandMu.Unlock()
 	u[8] = (u[8] &^ 0x7) | byte(shardId>>8)
 	u[9] = byte(shardId)
 	return u

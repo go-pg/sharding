@@ -10,7 +10,7 @@ import (
 )
 
 func TestUUIDParse(t *testing.T) {
-	sharding.SetRandSeed(rand.New(rand.NewSource(0)))
+	sharding.SetUUIDRand(rand.New(rand.NewSource(0)))
 
 	tm := time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)
 	uuid := sharding.NewUUID(0, tm)
