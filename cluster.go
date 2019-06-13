@@ -9,13 +9,22 @@ import (
 	"github.com/go-pg/pg/types"
 )
 
+type shardInfo struct {
+	id    int
+	shard *pg.DB
+	dbInd int
+}
+
 // Cluster maps many (up to 2048) logical database shards implemented
 // using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
-	gen     *IdGen
-	servers []*pg.DB
+	gen *IdGen
+
 	dbs     []*pg.DB
-	shards  []*pg.DB
+	servers []*pg.DB // unique dbs
+
+	shards    []shardInfo
+	shardList []*pg.DB
 }
 
 // NewClusterWithGen returns new PostgreSQL cluster consisting of physical
@@ -40,9 +49,10 @@ func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
 		panic("number of shards must be divideable by number of dbs")
 	}
 	cl := &Cluster{
-		gen:    gen,
-		dbs:    dbs,
-		shards: make([]*pg.DB, nshards),
+		gen:       gen,
+		dbs:       dbs,
+		shards:    make([]shardInfo, nshards),
+		shardList: make([]*pg.DB, nshards),
 	}
 	cl.init()
 	return cl
@@ -63,7 +73,14 @@ func (cl *Cluster) init() {
 	}
 
 	for i := 0; i < len(cl.shards); i++ {
-		cl.shards[i] = cl.newShard(cl.dbs[i%len(cl.dbs)], int64(i))
+		dbInd := i % len(cl.dbs)
+		shard := cl.newShard(cl.dbs[dbInd], int64(i))
+		cl.shards[i] = shardInfo{
+			id:    i,
+			shard: shard,
+			dbInd: dbInd,
+		}
+		cl.shardList[i] = shard
 	}
 }
 
@@ -75,13 +92,13 @@ func (cl *Cluster) newShard(db *pg.DB, id int64) *pg.DB {
 }
 
 func (cl *Cluster) Close() error {
-	var retErr error
+	var firstErr error
 	for _, db := range cl.servers {
-		if err := db.Close(); err != nil && retErr == nil {
-			retErr = err
+		if err := db.Close(); err != nil && firstErr == nil {
+			firstErr = err
 		}
 	}
-	return retErr
+	return firstErr
 }
 
 // DBs returns list of database servers in the cluster.
@@ -89,24 +106,26 @@ func (cl *Cluster) DBs() []*pg.DB {
 	return cl.dbs
 }
 
-// DB maps the number to the corresponding database server.
-func (cl *Cluster) DB(number int64) *pg.DB {
+// DB returns db id and db for the number.
+func (cl *Cluster) DB(number int64) (int, *pg.DB) {
 	idx := uint64(number)
 	idx %= uint64(len(cl.shards))
-	idx %= uint64(len(cl.dbs))
-	return cl.dbs[idx]
+	dbInd := cl.shards[idx].dbInd
+	return dbInd, cl.dbs[dbInd]
 }
 
 // Shards returns list of shards running in the db. If db is nil all
 // shards are returned.
 func (cl *Cluster) Shards(db *pg.DB) []*pg.DB {
 	if db == nil {
-		return cl.shards
+		return cl.shardList
 	}
+
 	var shards []*pg.DB
-	for i, shard := range cl.shards {
-		if cl.dbs[i%len(cl.dbs)] == db {
-			shards = append(shards, shard)
+	for i := range cl.shards {
+		shard := &cl.shards[i]
+		if cl.dbs[shard.dbInd] == db {
+			shards = append(shards, shard.shard)
 		}
 	}
 	return shards
@@ -115,7 +134,7 @@ func (cl *Cluster) Shards(db *pg.DB) []*pg.DB {
 // Shard maps the number to the corresponding shard in the cluster.
 func (cl *Cluster) Shard(number int64) *pg.DB {
 	idx := uint64(number) % uint64(len(cl.shards))
-	return cl.shards[idx]
+	return cl.shards[idx].shard
 }
 
 // SplitShard uses SplitId to extract shard id from the id and then
@@ -156,7 +175,9 @@ func (cl *Cluster) ForEachDB(fn func(db *pg.DB) error) error {
 func (cl *Cluster) ForEachShard(fn func(shard *pg.DB) error) error {
 	return cl.ForEachDB(func(db *pg.DB) error {
 		var firstErr error
-		for _, shard := range cl.shards {
+		for i := range cl.shards {
+			shard := cl.shards[i].shard
+
 			if shard.Options() != db.Options() {
 				continue
 			}
@@ -176,7 +197,9 @@ func (cl *Cluster) ForEachNShards(n int, fn func(shard *pg.DB) error) error {
 		errCh := make(chan error, 1)
 		limit := make(chan struct{}, n)
 
-		for _, shard := range cl.shards {
+		for i := range cl.shards {
+			shard := cl.shards[i].shard
+
 			if shard.Options() != db.Options() {
 				continue
 			}
@@ -211,7 +234,7 @@ func (cl *Cluster) ForEachNShards(n int, fn func(shard *pg.DB) error) error {
 // SubCluster is a subset of the cluster.
 type SubCluster struct {
 	cl     *Cluster
-	shards []*pg.DB
+	shards []*shardInfo
 }
 
 // SubCluster returns a subset of the cluster of the given size.
@@ -221,9 +244,9 @@ func (cl *Cluster) SubCluster(number int64, size int) *SubCluster {
 	}
 	step := len(cl.shards) / size
 	clusterId := int(uint64(number)%uint64(step)) * size
-	shards := make([]*pg.DB, size)
+	shards := make([]*shardInfo, size)
 	for i := 0; i < size; i++ {
-		shards[i] = cl.shards[clusterId+i]
+		shards[i] = &cl.shards[clusterId+i]
 	}
 
 	return &SubCluster{
@@ -242,7 +265,7 @@ func (cl *SubCluster) SplitShard(id int64) *pg.DB {
 // Shard maps the number to the corresponding shard in the subscluster.
 func (cl *SubCluster) Shard(number int64) *pg.DB {
 	idx := uint64(number) % uint64(len(cl.shards))
-	return cl.shards[idx]
+	return cl.shards[idx].shard
 }
 
 // ForEachShard concurrently calls the fn on each shard in the subcluster.
@@ -250,7 +273,9 @@ func (cl *SubCluster) Shard(number int64) *pg.DB {
 func (cl *SubCluster) ForEachShard(fn func(shard *pg.DB) error) error {
 	return cl.cl.ForEachDB(func(db *pg.DB) error {
 		var firstErr error
-		for _, shard := range cl.shards {
+		for i := range cl.shards {
+			shard := cl.shards[i].shard
+
 			if shard.Options() != db.Options() {
 				continue
 			}
@@ -270,7 +295,9 @@ func (cl *SubCluster) ForEachNShards(n int, fn func(shard *pg.DB) error) error {
 		errCh := make(chan error, 1)
 		limit := make(chan struct{}, n)
 
-		for _, shard := range cl.shards {
+		for i := range cl.shards {
+			shard := cl.shards[i].shard
+
 			if shard.Options() != db.Options() {
 				continue
 			}
