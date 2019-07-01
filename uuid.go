@@ -3,8 +3,10 @@ package sharding
 import (
 	"database/sql"
 	"database/sql/driver"
+	"encoding"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -42,30 +44,8 @@ func NewUUID(shardId int64, tm time.Time) UUID {
 
 func ParseUUID(b []byte) (UUID, error) {
 	var u UUID
-	if len(b) != uuidHexLen {
-		return u, fmt.Errorf("sharding: invalid UUID: %s", b)
-	}
-	_, err := hex.Decode(u[:4], b[:8])
-	if err != nil {
-		return u, err
-	}
-	_, err = hex.Decode(u[4:6], b[9:13])
-	if err != nil {
-		return u, err
-	}
-	_, err = hex.Decode(u[6:8], b[14:18])
-	if err != nil {
-		return u, err
-	}
-	_, err = hex.Decode(u[8:10], b[19:23])
-	if err != nil {
-		return u, err
-	}
-	_, err = hex.Decode(u[10:], b[24:])
-	if err != nil {
-		return u, err
-	}
-	return u, nil
+	err := u.UnmarshalText(b)
+	return u, err
 }
 
 func (u *UUID) IsZero() bool {
@@ -98,7 +78,7 @@ func (u *UUID) Time() time.Time {
 }
 
 func (u UUID) String() string {
-	b, _ := u.AppendValue(nil, 0)
+	b := appendHex(nil, u[:])
 	return string(b)
 }
 
@@ -113,18 +93,7 @@ func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
 		b = append(b, '\'')
 	}
 
-	b = append(b, make([]byte, uuidHexLen)...)
-
-	bb := b[len(b)-uuidHexLen:]
-	hex.Encode(bb[:8], u[:4])
-	bb[8] = '-'
-	hex.Encode(bb[9:13], u[4:6])
-	bb[13] = '-'
-	hex.Encode(bb[14:18], u[6:8])
-	bb[18] = '-'
-	hex.Encode(bb[19:23], u[8:10])
-	bb[23] = '-'
-	hex.Encode(bb[24:], u[10:])
+	b = appendHex(b, u[:])
 
 	if quote == 2 {
 		b = append(b, '"')
@@ -159,6 +128,80 @@ func (u *UUID) Scan(b interface{}) error {
 	return nil
 }
 
+var _ encoding.BinaryMarshaler = (*UUID)(nil)
+
+func (u *UUID) MarshalBinary() ([]byte, error) {
+	return u[:], nil
+}
+
+var _ encoding.BinaryUnmarshaler = (*UUID)(nil)
+
+func (u *UUID) UnmarshalBinary(b []byte) error {
+	if len(b) != uuidLen {
+		return fmt.Errorf("sharding: invalid UUID: %q", b)
+	}
+	copy(u[:], b)
+	return nil
+}
+
+var _ encoding.TextMarshaler = (*UUID)(nil)
+
+func (u *UUID) MarshalText() ([]byte, error) {
+	return appendHex(nil, u[:]), nil
+}
+
+var _ encoding.TextUnmarshaler = (*UUID)(nil)
+
+func (u *UUID) UnmarshalText(b []byte) error {
+	if len(b) != uuidHexLen {
+		return fmt.Errorf("sharding: invalid UUID: %q", b)
+	}
+	_, err := hex.Decode(u[:4], b[:8])
+	if err != nil {
+		return err
+	}
+	_, err = hex.Decode(u[4:6], b[9:13])
+	if err != nil {
+		return err
+	}
+	_, err = hex.Decode(u[6:8], b[14:18])
+	if err != nil {
+		return err
+	}
+	_, err = hex.Decode(u[8:10], b[19:23])
+	if err != nil {
+		return err
+	}
+	_, err = hex.Decode(u[10:], b[24:])
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+var _ json.Marshaler = (*UUID)(nil)
+
+func (u *UUID) MarshalJSON() ([]byte, error) {
+	if u.IsZero() {
+		return []byte("null"), nil
+	}
+
+	b := make([]byte, 0, uuidHexLen+2)
+	b = append(b, '"')
+	b = appendHex(b, u[:])
+	b = append(b, '"')
+	return b, nil
+}
+
+var _ json.Unmarshaler = (*UUID)(nil)
+
+func (u *UUID) UnmarshalJSON(b []byte) error {
+	if len(b) != uuidHexLen+2 {
+		return fmt.Errorf("sharding: invalid UUID: %q", b)
+	}
+	return u.UnmarshalText(b[1 : len(b)-1])
+}
+
 func unixMicrosecond(tm time.Time) int64 {
 	return tm.Unix()*1e6 + int64(tm.Nanosecond())/1e3
 }
@@ -166,4 +209,19 @@ func unixMicrosecond(tm time.Time) int64 {
 func fromUnixMicrosecond(n int64) time.Time {
 	secs := n / 1e6
 	return time.Unix(secs, (n-secs*1e6)*1e3)
+}
+
+func appendHex(b []byte, u []byte) []byte {
+	b = append(b, make([]byte, uuidHexLen)...)
+	bb := b[len(b)-uuidHexLen:]
+	hex.Encode(bb[:8], u[:4])
+	bb[8] = '-'
+	hex.Encode(bb[9:13], u[4:6])
+	bb[13] = '-'
+	hex.Encode(bb[14:18], u[6:8])
+	bb[18] = '-'
+	hex.Encode(bb[19:23], u[8:10])
+	bb[23] = '-'
+	hex.Encode(bb[24:], u[10:])
+	return b
 }
