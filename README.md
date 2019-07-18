@@ -7,9 +7,9 @@ Examples: http://godoc.org/github.com/go-pg/sharding#pkg-examples.
 
 ## Installation
 
-To install:
+This package requires [Go modules](https://github.com/golang/go/wiki/Modules) support:
 
-    go get github.com/go-pg/sharding
+    go get github.com/go-pg/sharding/v7
 
 ## Quickstart
 
@@ -19,8 +19,8 @@ package sharding_test
 import (
 	"fmt"
 
-	"github.com/go-pg/sharding"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/sharding/v7"
+	"github.com/go-pg/pg/v9"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are
