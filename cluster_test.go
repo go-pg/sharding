@@ -82,54 +82,6 @@ var _ = Describe("Cluster", func() {
 		Expect(cluster.Close()).NotTo(HaveOccurred())
 	})
 
-	It("distributes shards on servers", func() {
-		var dbs []*pg.DB
-		for i := 0; i < 16; i++ {
-			db := pg.Connect(&pg.Options{
-				Addr: fmt.Sprintf("db%d", i),
-			})
-			dbs = append(dbs, db)
-		}
-
-		tests := []struct {
-			dbs    []int
-			db     int
-			shards []int64
-		}{
-			{[]int{0}, 0, []int64{0, 1, 2, 3, 4, 5, 6, 7}},
-
-			{[]int{0, 1}, 0, []int64{0, 2, 4, 6}},
-			{[]int{0, 1}, 1, []int64{1, 3, 5, 7}},
-
-			{[]int{0, 1, 2, 3}, 0, []int64{0, 4}},
-			{[]int{0, 1, 2, 3}, 1, []int64{1, 5}},
-			{[]int{0, 1, 2, 3}, 2, []int64{2, 6}},
-			{[]int{0, 1, 2, 3}, 3, []int64{3, 7}},
-
-			{[]int{0, 1, 2, 1}, 0, []int64{0, 4}},
-			{[]int{0, 1, 2, 1}, 1, []int64{1, 3, 5, 7}},
-			{[]int{0, 1, 2, 1}, 2, []int64{2, 6}},
-
-			{[]int{0, 1, 2, 3}, 0, []int64{0, 4}},
-			{[]int{0, 1, 2, 3}, 1, []int64{1, 5}},
-			{[]int{0, 1, 2, 3}, 2, []int64{2, 6}},
-			{[]int{0, 1, 2, 3}, 3, []int64{3, 7}},
-		}
-		for _, test := range tests {
-			var cldbs []*pg.DB
-			for _, ind := range test.dbs {
-				cldbs = append(cldbs, dbs[ind])
-			}
-			cluster = sharding.NewCluster(cldbs, 8)
-
-			var shardIds []int64
-			for _, shard := range cluster.Shards(dbs[test.db]) {
-				shardIds = append(shardIds, shardId(shard))
-			}
-			Expect(shardIds).To(Equal(test.shards))
-		}
-	})
-
 	It("distributes projects on different servers", func() {
 		tests := []struct {
 			projectId int64
@@ -309,6 +261,55 @@ var _ = Describe("Cluster", func() {
 				Expect(shardIds).To(Equal(test.shardIds))
 			}
 		})
+	})
+})
+
+var _ = Describe("Cluster shards", func() {
+	It("are distributed across the servers", func() {
+		var dbs []*pg.DB
+		for i := 0; i < 16; i++ {
+			db := pg.Connect(&pg.Options{
+				Addr: fmt.Sprintf("db%d", i),
+			})
+			dbs = append(dbs, db)
+		}
+
+		tests := []struct {
+			dbs    []int
+			db     int
+			shards []int64
+		}{
+			{[]int{0}, 0, []int64{0, 1, 2, 3, 4, 5, 6, 7}},
+
+			{[]int{0, 1}, 0, []int64{0, 2, 4, 6}},
+			{[]int{0, 1}, 1, []int64{1, 3, 5, 7}},
+
+			{[]int{0, 1, 2, 3}, 0, []int64{0, 4}},
+			{[]int{0, 1, 2, 3}, 1, []int64{1, 5}},
+			{[]int{0, 1, 2, 3}, 2, []int64{2, 6}},
+			{[]int{0, 1, 2, 3}, 3, []int64{3, 7}},
+
+			{[]int{0, 1, 2, 1}, 0, []int64{0, 4}},
+			{[]int{0, 1, 2, 1}, 1, []int64{1, 3, 5, 7}},
+			{[]int{0, 1, 2, 1}, 2, []int64{2, 6}},
+
+			{[]int{0, 1, 2}, 0, []int64{0, 4}},
+			{[]int{0, 1, 2}, 1, []int64{1, 3, 5, 7}},
+			{[]int{0, 1, 2}, 2, []int64{2, 6}},
+		}
+		for _, test := range tests {
+			var cldbs []*pg.DB
+			for _, ind := range test.dbs {
+				cldbs = append(cldbs, dbs[ind])
+			}
+			cluster := sharding.NewCluster(cldbs, 8)
+
+			var shardIds []int64
+			for _, shard := range cluster.Shards(dbs[test.db]) {
+				shardIds = append(shardIds, shardId(shard))
+			}
+			Expect(shardIds).To(Equal(test.shards))
+		}
 	})
 })
 

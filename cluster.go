@@ -45,9 +45,17 @@ func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
 	if nshards < len(dbs) {
 		panic("number of shards must be greater or equal number of dbs")
 	}
-	if nshards%len(dbs) != 0 {
-		panic("number of shards must be divideable by number of dbs")
+
+	// Fill up holes using dbs from the first half of the cluster.
+	// E.g. [db1, db2, db3] becomes [db1, db2, db3, db2].
+	ndbs := len(dbs)
+	for nshards%ndbs != 0 {
+		ndbs++
 	}
+	for i := len(dbs); i < ndbs; i++ {
+		dbs = append(dbs, dbs[i-ndbs/2])
+	}
+
 	cl := &Cluster{
 		gen:       gen,
 		dbs:       dbs,
@@ -55,6 +63,7 @@ func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
 		shardList: make([]*pg.DB, nshards),
 	}
 	cl.init()
+
 	return cl
 }
 
