@@ -143,10 +143,7 @@ func ExampleCluster() {
 }
 
 const sqlFuncs = `
-CREATE SEQUENCE ?shard.id_seq;
-
--- _next_id returns unique sortable id.
-CREATE FUNCTION ?shard._next_id(tm timestamptz, shard_id int, seq_id bigint)
+CREATE OR REPLACE FUNCTION public.next_id(tm timestamptz, seq_id bigint, shard_id int)
 RETURNS bigint AS $$
 DECLARE
   max_shard_id CONSTANT bigint := 2048;
@@ -161,16 +158,17 @@ BEGIN
   RETURN id;
 END;
 $$
-LANGUAGE plpgsql
-IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
-CREATE FUNCTION ?shard.next_id()
+CREATE FUNCTION ?shard.next_id(tm timestamptz, seq_id bigint)
 RETURNS bigint AS $$
 BEGIN
-   RETURN ?shard._next_id(clock_timestamp(), ?shard_id, nextval('?shard.id_seq'));
+   RETURN public.next_id(tm, seq_id, ?shard_id);
 END;
 $$
 LANGUAGE plpgsql;
+
+CREATE SEQUENCE ?shard.id_seq;
 `
 ```
 
