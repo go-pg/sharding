@@ -25,10 +25,6 @@ var (
 
 type UUID [uuidLen]byte
 
-var _ types.ValueAppender = (*UUID)(nil)
-var _ sql.Scanner = (*UUID)(nil)
-var _ driver.Valuer = (*UUID)(nil)
-
 func NewUUID(shardId int64, tm time.Time) UUID {
 	shardId = shardId % int64(DefaultIdGen.NumShards())
 
@@ -82,6 +78,8 @@ func (u UUID) String() string {
 	return string(b)
 }
 
+var _ types.ValueAppender = (*UUID)(nil)
+
 func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
 	if u.IsZero() {
 		return types.AppendNull(b, quote), nil
@@ -104,9 +102,13 @@ func (u UUID) AppendValue(b []byte, quote int) ([]byte, error) {
 	return b, nil
 }
 
+var _ driver.Valuer = (*UUID)(nil)
+
 func (u UUID) Value() (driver.Value, error) {
 	return u.String(), nil
 }
+
+var _ sql.Scanner = (*UUID)(nil)
 
 func (u *UUID) Scan(b interface{}) error {
 	if b == nil {
@@ -130,7 +132,7 @@ func (u *UUID) Scan(b interface{}) error {
 
 var _ encoding.BinaryMarshaler = (*UUID)(nil)
 
-func (u *UUID) MarshalBinary() ([]byte, error) {
+func (u UUID) MarshalBinary() ([]byte, error) {
 	return u[:], nil
 }
 
@@ -146,7 +148,7 @@ func (u *UUID) UnmarshalBinary(b []byte) error {
 
 var _ encoding.TextMarshaler = (*UUID)(nil)
 
-func (u *UUID) MarshalText() ([]byte, error) {
+func (u UUID) MarshalText() ([]byte, error) {
 	return appendHex(nil, u[:]), nil
 }
 
@@ -181,7 +183,7 @@ func (u *UUID) UnmarshalText(b []byte) error {
 
 var _ json.Marshaler = (*UUID)(nil)
 
-func (u *UUID) MarshalJSON() ([]byte, error) {
+func (u UUID) MarshalJSON() ([]byte, error) {
 	if u.IsZero() {
 		return []byte("null"), nil
 	}
