@@ -205,10 +205,10 @@ func (u UUID) MarshalJSON() ([]byte, error) {
 var _ json.Unmarshaler = (*UUID)(nil)
 
 func (u *UUID) UnmarshalJSON(b []byte) error {
-	if len(b) != uuidHexLen+2 {
-		return fmt.Errorf("sharding: invalid UUID: %q", b)
+	if len(b) >= 2 {
+		b = b[1 : len(b)-1]
 	}
-	return u.UnmarshalText(b[1 : len(b)-1])
+	return u.UnmarshalText(b)
 }
 
 func unixMicrosecond(tm time.Time) int64 {
