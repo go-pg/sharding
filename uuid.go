@@ -15,8 +15,10 @@ import (
 	"github.com/go-pg/pg/v9/types"
 )
 
-const uuidLen = 16
-const uuidHexLen = 36
+const (
+	uuidLen    = 16
+	uuidHexLen = 36
+)
 
 var (
 	uuidRandMu sync.Mutex
@@ -155,6 +157,11 @@ func (u UUID) MarshalText() ([]byte, error) {
 var _ encoding.TextUnmarshaler = (*UUID)(nil)
 
 func (u *UUID) UnmarshalText(b []byte) error {
+	if len(b) == uuidHexLen-4 {
+		_, err := hex.Decode(u[:], b)
+		return err
+	}
+
 	if len(b) != uuidHexLen {
 		return fmt.Errorf("sharding: invalid UUID: %q", b)
 	}
