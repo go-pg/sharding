@@ -166,7 +166,7 @@ BEGIN
    RETURN public.make_id(tm, seq_id, ?shard_id);
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE SEQUENCE ?shard.id_seq;
 `
