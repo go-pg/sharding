@@ -143,7 +143,7 @@ func ExampleCluster() {
 }
 
 const sqlFuncs = `
-CREATE OR REPLACE FUNCTION public.next_id(tm timestamptz, seq_id bigint, shard_id int)
+CREATE OR REPLACE FUNCTION public.make_id(tm timestamptz, seq_id bigint, shard_id int)
 RETURNS bigint AS $$
 DECLARE
   max_shard_id CONSTANT bigint := 2048;
@@ -160,10 +160,10 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE FUNCTION ?shard.next_id(tm timestamptz, seq_id bigint)
+CREATE FUNCTION ?shard.make_id(tm timestamptz, seq_id bigint)
 RETURNS bigint AS $$
 BEGIN
-   RETURN public.next_id(tm, seq_id, ?shard_id);
+   RETURN public.make_id(tm, seq_id, ?shard_id);
 END;
 $$
 LANGUAGE plpgsql;

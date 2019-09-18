@@ -41,10 +41,10 @@ var _ = Describe("named params", func() {
 	})
 
 	It("supports ?shard_id", func() {
-		var shardId int
-		_, err := cluster.Shard(3).QueryOne(pg.Scan(&shardId), "SELECT ?shard_id")
+		var shardID int
+		_, err := cluster.Shard(3).QueryOne(pg.Scan(&shardID), "SELECT ?shard_id")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(shardId).To(Equal(3))
+		Expect(shardID).To(Equal(3))
 	})
 
 	It("supports ?epoch", func() {
@@ -135,21 +135,21 @@ var _ = Describe("Cluster", func() {
 				defer GinkgoRecover()
 
 				mu.Lock()
-				Expect(shards).NotTo(ContainElement(shardId))
-				shards = append(shards, shardId(shard))
+				Expect(shards).NotTo(ContainElement(shardID))
+				shards = append(shards, shardID(shard))
 				mu.Unlock()
 				return nil
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
-			for shardId := int64(0); shardId < 4; shardId++ {
-				Expect(shards).To(ContainElement(shardId))
+			for shardID := int64(0); shardID < 4; shardID++ {
+				Expect(shards).To(ContainElement(shardID))
 			}
 		})
 
 		It("returns an error if fn fails", func() {
 			err := cluster.ForEachShard(func(shard *pg.DB) error {
-				if shardId(shard) == 3 {
+				if shardID(shard) == 3 {
 					return errors.New("fake error")
 				}
 				return nil
@@ -165,23 +165,23 @@ var _ = Describe("Cluster", func() {
 			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
 				defer GinkgoRecover()
 
-				shardId := shardId(shard)
+				shardID := shardID(shard)
 				mu.Lock()
-				Expect(shards).NotTo(ContainElement(shardId))
-				shards = append(shards, shardId)
+				Expect(shards).NotTo(ContainElement(shardID))
+				shards = append(shards, shardID)
 				mu.Unlock()
 				return nil
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(shards).To(HaveLen(4))
-			for shardId := int64(0); shardId < 4; shardId++ {
-				Expect(shards).To(ContainElement(shardId))
+			for shardID := int64(0); shardID < 4; shardID++ {
+				Expect(shards).To(ContainElement(shardID))
 			}
 		})
 
 		It("returns an error if fn fails", func() {
 			err := cluster.ForEachNShards(2, func(shard *pg.DB) error {
-				if shardId(shard) == 3 {
+				if shardID(shard) == 3 {
 					return errors.New("fake error")
 				}
 				return nil
@@ -206,7 +206,7 @@ var _ = Describe("Cluster", func() {
 		It("creates sub-cluster", func() {
 			tests := []struct {
 				subcl    *sharding.SubCluster
-				shardIds []int64
+				shardIDs []int64
 			}{
 				{cluster.SubCluster(0, 2), []int64{0, 1}},
 				{cluster.SubCluster(1, 2), []int64{2, 3}},
@@ -226,39 +226,39 @@ var _ = Describe("Cluster", func() {
 			}
 			for _, test := range tests {
 				var mu sync.Mutex
-				var shardIds []int64
+				var shardIDs []int64
 				dbs := make(map[*pg.Options]struct{})
 				err := test.subcl.ForEachShard(func(shard *pg.DB) error {
 					mu.Lock()
-					shardIds = append(shardIds, shardId(shard))
+					shardIDs = append(shardIDs, shardID(shard))
 					dbs[shard.Options()] = struct{}{}
 					mu.Unlock()
 					return nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-				sort.Slice(shardIds, func(i, j int) bool {
-					return shardIds[i] < shardIds[j]
+				sort.Slice(shardIDs, func(i, j int) bool {
+					return shardIDs[i] < shardIDs[j]
 				})
-				Expect(shardIds).To(Equal(test.shardIds))
-				Expect(len(dbs)).To(Equal(min(len(alldbs), len(shardIds))))
+				Expect(shardIDs).To(Equal(test.shardIDs))
+				Expect(len(dbs)).To(Equal(min(len(alldbs), len(shardIDs))))
 
-				shardIds = shardIds[:0]
-				add := func(shardId int64) {
-					for _, id := range shardIds {
-						if id == shardId {
+				shardIDs = shardIDs[:0]
+				add := func(shardID int64) {
+					for _, id := range shardIDs {
+						if id == shardID {
 							return
 						}
 					}
-					shardIds = append(shardIds, shardId)
+					shardIDs = append(shardIDs, shardID)
 				}
 
 				for i := 0; i < 16; i++ {
 					shard := test.subcl.Shard(int64(i))
-					shardId := shardId(shard)
-					Expect(test.shardIds).To(ContainElement(shardId), "number=%d", i)
-					add(shardId)
+					shardID := shardID(shard)
+					Expect(test.shardIDs).To(ContainElement(shardID), "number=%d", i)
+					add(shardID)
 				}
-				Expect(shardIds).To(Equal(test.shardIds))
+				Expect(shardIDs).To(Equal(test.shardIDs))
 			}
 		})
 	})
@@ -300,16 +300,16 @@ var _ = Describe("Cluster shards", func() {
 			}
 			cluster := sharding.NewCluster(cldbs, 8)
 
-			var shardIds []int64
+			var shardIDs []int64
 			for _, shard := range cluster.Shards(dbs[test.db]) {
-				shardIds = append(shardIds, shardId(shard))
+				shardIDs = append(shardIDs, shardID(shard))
 			}
-			Expect(shardIds).To(Equal(test.shards))
+			Expect(shardIDs).To(Equal(test.shards))
 		}
 	})
 })
 
-func shardId(shard *pg.DB) int64 {
+func shardID(shard *pg.DB) int64 {
 	return shard.Param("shard_id").(int64)
 }
 

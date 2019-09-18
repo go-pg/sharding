@@ -7,11 +7,15 @@ import (
 )
 
 var (
-	epoch        = time.Date(2010, time.January, 01, 00, 0, 0, 0, time.UTC)
-	DefaultIdGen = NewIdGen(41, 11, 12, epoch)
+	_epoch      = time.Date(2010, time.January, 01, 00, 0, 0, 0, time.UTC)
+	globalIDGen = NewIDGen(41, 11, 12, _epoch)
 )
 
-type IdGen struct {
+func SetIDGen(gen *IDGen) {
+	globalIDGen = gen
+}
+
+type IDGen struct {
 	shardBits uint
 	seqBits   uint
 	epoch     int64 // in milliseconds
@@ -20,13 +24,13 @@ type IdGen struct {
 	seqMask   int64
 }
 
-func NewIdGen(timeBits, shardBits, seqBits uint, epoch time.Time) *IdGen {
+func NewIDGen(timeBits, shardBits, seqBits uint, epoch time.Time) *IDGen {
 	if timeBits+shardBits+seqBits != 64 {
 		panic("timeBits + shardBits + seqBits != 64")
 	}
 
 	dur := time.Duration(1) << (timeBits - 1) * time.Millisecond
-	return &IdGen{
+	return &IDGen{
 		shardBits: shardBits,
 		seqBits:   seqBits,
 		epoch:     epoch.UnixNano() / int64(time.Millisecond),
@@ -36,13 +40,13 @@ func NewIdGen(timeBits, shardBits, seqBits uint, epoch time.Time) *IdGen {
 	}
 }
 
-func (g *IdGen) NumShards() int {
+func (g *IDGen) NumShards() int {
 	return int(g.shardMask) + 1
 }
 
-// NextId returns incremental id for the time. Note that you can only
+// MakeId returns an id for the time. Note that you can only
 // generate 4096 unique numbers per millisecond.
-func (g *IdGen) NextId(tm time.Time, shard, seq int64) int64 {
+func (g *IDGen) MakeID(tm time.Time, shard, seq int64) int64 {
 	if tm.Before(g.minTime) {
 		return int64(math.MinInt64)
 	}
@@ -54,8 +58,8 @@ func (g *IdGen) NextId(tm time.Time, shard, seq int64) int64 {
 	return id
 }
 
-// MaxId returns max id for the time.
-func (g *IdGen) MaxId(tm time.Time, shard int64) int64 {
+// MaxID returns max id for the time.
+func (g *IDGen) MaxID(tm time.Time, shard int64) int64 {
 	id := tm.UnixNano()/int64(time.Millisecond) - g.epoch
 	id <<= g.shardBits + g.seqBits
 	id |= shard << g.seqBits
@@ -63,72 +67,72 @@ func (g *IdGen) MaxId(tm time.Time, shard int64) int64 {
 	return id
 }
 
-// SplitId splits id into time, shard id, and sequence id.
-func (g *IdGen) SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
+// SplitID splits id into time, shard id, and sequence id.
+func (g *IDGen) SplitID(id int64) (tm time.Time, shardID int64, seqID int64) {
 	ms := id>>(g.shardBits+g.seqBits) + g.epoch
 	sec := ms / 1000
 	tm = time.Unix(sec, (ms-sec*1000)*int64(time.Millisecond))
-	shardId = (id >> g.seqBits) & g.shardMask
-	seqId = id & g.seqMask
+	shardID = (id >> g.seqBits) & g.shardMask
+	seqID = id & g.seqMask
 	return
 }
 
 //------------------------------------------------------------------------------
 
-// SplitId splits id into time, shard id, and sequence id.
-func SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
-	return DefaultIdGen.SplitId(id)
+// SplitID splits id into time, shard id, and sequence id.
+func SplitID(id int64) (tm time.Time, shardID int64, seqID int64) {
+	return globalIDGen.SplitID(id)
 }
 
-// MinId returns min id for the time.
-func MinId(tm time.Time) int64 {
-	return DefaultIdGen.NextId(tm, 0, 0)
+// MinID returns min id for the time.
+func MinID(tm time.Time) int64 {
+	return globalIDGen.MakeID(tm, 0, 0)
 }
 
-// MaxId returns max id for the time.
-func MaxId(tm time.Time) int64 {
-	return DefaultIdGen.MaxId(tm, DefaultIdGen.shardMask)
+// MaxID returns max id for the time.
+func MaxID(tm time.Time) int64 {
+	return globalIDGen.MaxID(tm, globalIDGen.shardMask)
 }
 
 //------------------------------------------------------------------------------
 
-// IdGen generates sortable unique int64 numbers that consist of:
+// IDGen generates sortable unique int64 numbers that consist of:
 // - 41 bits for time in milliseconds.
 // - 11 bits for shard id.
 // - 12 bits for auto-incrementing sequence.
 //
 // As a result we can generate 4096 ids per millisecond for each of 2048 shards.
 // Minimum supported time is 1975-02-28, maximum is 2044-12-31.
-type ShardIdGen struct {
+type ShardIDGen struct {
 	shard int64
 	seq   int64
-	gen   *IdGen
+	gen   *IDGen
 }
 
-// NewShardIdGen returns id generator for the shard.
-func NewShardIdGen(shard int64, gen *IdGen) *ShardIdGen {
+// NewShardIDGen returns id generator for the shard.
+func NewShardIDGen(shard int64, gen *IDGen) *ShardIDGen {
 	if gen == nil {
-		gen = DefaultIdGen
+		gen = globalIDGen
 	}
-	return &ShardIdGen{
+	return &ShardIDGen{
 		shard: shard % int64(gen.NumShards()),
 		gen:   gen,
 	}
 }
 
-// NextId returns incremental id for the time. Note that you can only
+// NextID returns incremental id for the time. Note that you can only
 // generate 4096 unique numbers per millisecond.
-func (g *ShardIdGen) NextId(tm time.Time) int64 {
+func (g *ShardIDGen) NextID(tm time.Time) int64 {
 	seq := atomic.AddInt64(&g.seq, 1) - 1
-	return g.gen.NextId(tm, g.shard, seq)
+	return g.gen.MakeID(tm, g.shard, seq)
 }
 
 // MaxId returns max id for the time.
-func (g *ShardIdGen) MaxId(tm time.Time) int64 {
-	return g.gen.MaxId(tm, g.shard)
+func (g *ShardIDGen) MaxID(tm time.Time) int64 {
+	return g.gen.MaxID(tm, g.shard)
 }
 
-// SplitId splits id into time, shard id, and sequence id.
-func (g *ShardIdGen) SplitId(id int64) (tm time.Time, shardId int64, seqId int64) {
-	return g.gen.SplitId(id)
+// SplitID splits id into time, shard id, and sequence id.
+func (g *ShardIDGen) SplitID(id int64) (tm time.Time, shardID int64, seqID int64) {
+	return g.gen.SplitID(id)
 }

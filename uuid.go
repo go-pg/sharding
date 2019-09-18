@@ -27,16 +27,16 @@ var (
 
 type UUID [uuidLen]byte
 
-func NewUUID(shardId int64, tm time.Time) UUID {
-	shardId = shardId % int64(DefaultIdGen.NumShards())
+func NewUUID(shardID int64, tm time.Time) UUID {
+	shardID = shardID % int64(globalIDGen.NumShards())
 
 	var u UUID
 	binary.BigEndian.PutUint64(u[:8], uint64(unixMicrosecond(tm)))
 	uuidRandMu.Lock()
 	uuidRand.Read(u[8:])
 	uuidRandMu.Unlock()
-	u[8] = (u[8] &^ 0x7) | byte(shardId>>8)
-	u[9] = byte(shardId)
+	u[8] = (u[8] &^ 0x7) | byte(shardID>>8)
+	u[9] = byte(shardID)
 	return u
 }
 
@@ -58,16 +58,16 @@ func (u *UUID) IsZero() bool {
 	return true
 }
 
-func (u *UUID) Split() (shardId int64, tm time.Time) {
+func (u *UUID) Split() (shardID int64, tm time.Time) {
 	tm = fromUnixMicrosecond(int64(binary.BigEndian.Uint64(u[:8])))
-	shardId |= (int64(u[8]) & 0x7) << 8
-	shardId |= int64(u[9])
+	shardID |= (int64(u[8]) & 0x7) << 8
+	shardID |= int64(u[9])
 	return
 }
 
-func (u *UUID) ShardId() int64 {
-	shardId, _ := u.Split()
-	return shardId
+func (u *UUID) ShardID() int64 {
+	shardID, _ := u.Split()
+	return shardID
 }
 
 func (u *UUID) Time() time.Time {

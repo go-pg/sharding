@@ -18,7 +18,7 @@ type shardInfo struct {
 // Cluster maps many (up to 2048) logical database shards implemented
 // using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 type Cluster struct {
-	gen *IdGen
+	gen *IDGen
 
 	dbs     []*pg.DB
 	servers []*pg.DB // unique dbs
@@ -29,9 +29,9 @@ type Cluster struct {
 
 // NewClusterWithGen returns new PostgreSQL cluster consisting of physical
 // dbs and running nshards logical shards.
-func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IdGen) *Cluster {
+func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IDGen) *Cluster {
 	if gen == nil {
-		gen = DefaultIdGen
+		gen = globalIDGen
 	}
 	if len(dbs) == 0 {
 		panic("at least one db is required")
@@ -139,11 +139,11 @@ func (cl *Cluster) Shard(number int64) *pg.DB {
 	return cl.shards[idx].shard
 }
 
-// SplitShard uses SplitId to extract shard id from the id and then
+// SplitShard uses SplitID to extract shard id from the id and then
 // returns corresponding Shard in the cluster.
 func (cl *Cluster) SplitShard(id int64) *pg.DB {
-	_, shardId, _ := cl.gen.SplitId(id)
-	return cl.Shard(shardId)
+	_, shardID, _ := cl.gen.SplitID(id)
+	return cl.Shard(shardID)
 }
 
 // ForEachDB concurrently calls the fn on each database in the cluster.
@@ -257,11 +257,11 @@ func (cl *Cluster) SubCluster(number int64, size int) *SubCluster {
 	}
 }
 
-// SplitShard uses SplitId to extract shard id from the id and then
+// SplitShard uses SplitID to extract shard id from the id and then
 // returns corresponding Shard in the subcluster.
 func (cl *SubCluster) SplitShard(id int64) *pg.DB {
-	_, shardId, _ := cl.cl.gen.SplitId(id)
-	return cl.Shard(shardId)
+	_, shardID, _ := cl.cl.gen.SplitID(id)
+	return cl.Shard(shardID)
 }
 
 // Shard maps the number to the corresponding shard in the subscluster.
