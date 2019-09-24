@@ -26,7 +26,7 @@ import (
 // Users are sharded by AccountId, i.e. users with same account id are
 // placed on the same shard.
 type User struct {
-	tableName string `sql:"?shard.users"`
+	tableName string `pg:"?shard.users"`
 
 	Id        int64
 	AccountId int64
