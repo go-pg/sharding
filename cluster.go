@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/go-pg/pg/v9/types"
 )
 
 type shardInfo struct {
@@ -89,7 +88,7 @@ func (cl *Cluster) init() {
 func (cl *Cluster) newShard(db *pg.DB, id int64) *pg.DB {
 	name := "shard" + strconv.FormatInt(id, 10)
 	return db.WithParam("shard_id", id).
-		WithParam("shard", types.Q(name)).
+		WithParam("shard", pg.Safe(name)).
 		WithParam("epoch", cl.gen.epoch)
 }
 
