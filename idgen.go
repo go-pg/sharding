@@ -58,13 +58,14 @@ func (g *IDGen) MakeID(tm time.Time, shard, seq int64) int64 {
 	return id
 }
 
+// MinID returns min id for the time.
+func (g *IDGen) MinID(tm time.Time) int64 {
+	return g.MakeID(tm, 0, 0)
+}
+
 // MaxID returns max id for the time.
-func (g *IDGen) MaxID(tm time.Time, shard int64) int64 {
-	id := tm.UnixNano()/int64(time.Millisecond) - g.epoch
-	id <<= g.shardBits + g.seqBits
-	id |= shard << g.seqBits
-	id |= g.seqMask
-	return id
+func (g *IDGen) MaxID(tm time.Time) int64 {
+	return g.MakeID(tm, g.shardMask, g.seqMask)
 }
 
 // SplitID splits id into time, shard id, and sequence id.
@@ -86,12 +87,12 @@ func SplitID(id int64) (tm time.Time, shardID int64, seqID int64) {
 
 // MinID returns min id for the time.
 func MinID(tm time.Time) int64 {
-	return globalIDGen.MakeID(tm, 0, 0)
+	return globalIDGen.MinID(tm)
 }
 
 // MaxID returns max id for the time.
 func MaxID(tm time.Time) int64 {
-	return globalIDGen.MaxID(tm, globalIDGen.shardMask)
+	return globalIDGen.MaxID(tm)
 }
 
 //------------------------------------------------------------------------------
@@ -127,9 +128,14 @@ func (g *ShardIDGen) NextID(tm time.Time) int64 {
 	return g.gen.MakeID(tm, g.shard, seq)
 }
 
+// MinId returns min id for the time.
+func (g *ShardIDGen) MinID(tm time.Time) int64 {
+	return g.gen.MakeID(tm, g.shard, 0)
+}
+
 // MaxId returns max id for the time.
 func (g *ShardIDGen) MaxID(tm time.Time) int64 {
-	return g.gen.MaxID(tm, g.shard)
+	return g.gen.MakeID(tm, g.shard, g.gen.seqMask)
 }
 
 // SplitID splits id into time, shard id, and sequence id.
