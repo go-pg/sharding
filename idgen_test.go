@@ -11,13 +11,13 @@ import (
 func TestMinIdMaxId(t *testing.T) {
 	tm := time.Unix(1262304000, 0)
 
-	minID := sharding.MinID(tm)
+	minID := sharding.DefaultIDGen.MinID(tm)
 	const wantedMinID = 0
 	if minID != wantedMinID {
 		t.Errorf("got %d, wanted %d", minID, wantedMinID)
 	}
 
-	maxID := sharding.MaxID(tm)
+	maxID := sharding.DefaultIDGen.MaxID(tm)
 	const wantedMaxID = 8388607
 	if maxID != wantedMaxID {
 		t.Errorf("got %d, wanted %d", maxID, wantedMaxID)

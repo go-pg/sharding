@@ -28,7 +28,7 @@ var (
 type UUID [uuidLen]byte
 
 func NewUUID(shardID int64, tm time.Time) UUID {
-	shardID = shardID % int64(globalIDGen.NumShards())
+	shardID = shardID % int64(DefaultIDGen.NumShards())
 
 	var u UUID
 	binary.BigEndian.PutUint64(u[:8], uint64(unixMicrosecond(tm)))

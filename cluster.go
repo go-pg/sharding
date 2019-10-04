@@ -30,7 +30,7 @@ type Cluster struct {
 // dbs and running nshards logical shards.
 func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IDGen) *Cluster {
 	if gen == nil {
-		gen = globalIDGen
+		gen = DefaultIDGen
 	}
 	if len(dbs) == 0 {
 		panic("at least one db is required")

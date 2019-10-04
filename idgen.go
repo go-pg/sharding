@@ -7,13 +7,9 @@ import (
 )
 
 var (
-	_epoch      = time.Date(2010, time.January, 01, 00, 0, 0, 0, time.UTC)
-	globalIDGen = NewIDGen(41, 11, 12, _epoch)
+	_epoch       = time.Date(2010, time.January, 01, 00, 0, 0, 0, time.UTC)
+	DefaultIDGen = NewIDGen(41, 11, 12, _epoch)
 )
-
-func SetIDGen(gen *IDGen) {
-	globalIDGen = gen
-}
 
 type IDGen struct {
 	shardBits uint
@@ -80,23 +76,6 @@ func (g *IDGen) SplitID(id int64) (tm time.Time, shardID int64, seqID int64) {
 
 //------------------------------------------------------------------------------
 
-// SplitID splits id into time, shard id, and sequence id.
-func SplitID(id int64) (tm time.Time, shardID int64, seqID int64) {
-	return globalIDGen.SplitID(id)
-}
-
-// MinID returns min id for the time.
-func MinID(tm time.Time) int64 {
-	return globalIDGen.MinID(tm)
-}
-
-// MaxID returns max id for the time.
-func MaxID(tm time.Time) int64 {
-	return globalIDGen.MaxID(tm)
-}
-
-//------------------------------------------------------------------------------
-
 // IDGen generates sortable unique int64 numbers that consist of:
 // - 41 bits for time in milliseconds.
 // - 11 bits for shard id.
@@ -113,7 +92,7 @@ type ShardIDGen struct {
 // NewShardIDGen returns id generator for the shard.
 func NewShardIDGen(shard int64, gen *IDGen) *ShardIDGen {
 	if gen == nil {
-		gen = globalIDGen
+		gen = DefaultIDGen
 	}
 	return &ShardIDGen{
 		shard: shard % int64(gen.NumShards()),
