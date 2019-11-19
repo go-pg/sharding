@@ -11,7 +11,7 @@ import (
 // Users are sharded by AccountId, i.e. users with same account id are
 // placed on same shard.
 type User struct {
-	tableName string `pg:"?shard.users"`
+	tableName string `pg:"?SHARD.users"`
 
 	Id        int64
 	AccountId int64
@@ -45,10 +45,10 @@ func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 // createShard creates database schema for a given shard.
 func createShard(shard *pg.DB) error {
 	queries := []string{
-		`DROP SCHEMA IF EXISTS ?shard CASCADE`,
-		`CREATE SCHEMA ?shard`,
+		`DROP SCHEMA IF EXISTS ?SHARD CASCADE`,
+		`CREATE SCHEMA ?SHARD`,
 		sqlFuncs,
-		`CREATE TABLE ?shard.users (id bigint DEFAULT ?shard.next_id(), account_id int, name text, emails jsonb)`,
+		`CREATE TABLE ?SHARD.users (id bigint DEFAULT ?SHARD.next_id(), account_id int, name text, emails jsonb)`,
 	}
 
 	for _, q := range queries {
@@ -128,33 +128,38 @@ func ExampleCluster() {
 }
 
 const sqlFuncs = `
-CREATE SEQUENCE ?shard.id_seq;
-
--- _next_id returns unique sortable id.
-CREATE FUNCTION ?shard._next_id(tm timestamptz, shard_id int, seq_id bigint)
+CREATE OR REPLACE FUNCTION public.make_id(tm timestamptz, seq_id bigint, shard_id int)
 RETURNS bigint AS $$
 DECLARE
-  our_epoch CONSTANT bigint := 1262304000000;
   max_shard_id CONSTANT bigint := 2048;
   max_seq_id CONSTANT bigint := 4096;
   id bigint;
 BEGIN
   shard_id := shard_id % max_shard_id;
   seq_id := seq_id % max_seq_id;
-  id := (floor(extract(epoch FROM tm) * 1000)::bigint - our_epoch) << 23;
+  id := (floor(extract(epoch FROM tm) * 1000)::bigint - ?EPOCH) << 23;
   id := id | (shard_id << 12);
   id := id | seq_id;
   RETURN id;
 END;
 $$
-LANGUAGE plpgsql
-IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE;
 
-CREATE FUNCTION ?shard.next_id()
+CREATE FUNCTION ?SHARD.make_id(tm timestamptz, seq_id bigint)
 RETURNS bigint AS $$
 BEGIN
-   RETURN ?shard._next_id(clock_timestamp(), ?shard_id, nextval('?shard.id_seq'));
+   RETURN public.make_id(tm, seq_id, ?SHARD_ID);
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE FUNCTION ?SHARD.next_id()
+RETURNS bigint AS $$
+BEGIN
+   RETURN ?SHARD.make_id(clock_timestamp(), nextval('?SHARD.id_seq'));
 END;
 $$
 LANGUAGE plpgsql;
+
+CREATE SEQUENCE ?SHARD.id_seq;
 `

@@ -31,25 +31,25 @@ var _ = Describe("named params", func() {
 		cluster = sharding.NewCluster([]*pg.DB{db}, 4)
 	})
 
-	It("supports ?shard", func() {
+	It("supports ?SHARD", func() {
 		var shardName, hello string
 		_, err := cluster.Shard(3).QueryOne(
-			pg.Scan(&shardName, &hello), `SELECT '?shard', ?`, "hello")
+			pg.Scan(&shardName, &hello), `SELECT '?SHARD', ?`, "hello")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardName).To(Equal("shard3"))
 		Expect(hello).To(Equal("hello"))
 	})
 
-	It("supports ?shard_id", func() {
+	It("supports ?SHARD_ID", func() {
 		var shardID int
-		_, err := cluster.Shard(3).QueryOne(pg.Scan(&shardID), "SELECT ?shard_id")
+		_, err := cluster.Shard(3).QueryOne(pg.Scan(&shardID), "SELECT ?SHARD_ID")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(shardID).To(Equal(3))
 	})
 
-	It("supports ?epoch", func() {
+	It("supports ?EPOCH", func() {
 		var epoch int64
-		_, err := cluster.Shard(0).QueryOne(pg.Scan(&epoch), "SELECT ?epoch")
+		_, err := cluster.Shard(0).QueryOne(pg.Scan(&epoch), "SELECT ?EPOCH")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(epoch).To(Equal(int64(1262304000000)))
 	})
@@ -310,7 +310,7 @@ var _ = Describe("Cluster shards", func() {
 })
 
 func shardID(shard *pg.DB) int64 {
-	return shard.Param("shard_id").(int64)
+	return shard.Param("SHARD_ID").(int64)
 }
 
 func min(a, b int) int {

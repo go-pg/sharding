@@ -36,7 +36,7 @@ func NewClusterWithGen(dbs []*pg.DB, nshards int, gen *IDGen) *Cluster {
 		panic("at least one db is required")
 	}
 	if nshards == 0 {
-		panic("at least on shard is required")
+		panic("at least one shard is required")
 	}
 	if len(dbs) > gen.NumShards() || nshards > gen.NumShards() {
 		panic(fmt.Sprintf("too many shards"))
@@ -87,9 +87,13 @@ func (cl *Cluster) init() {
 
 func (cl *Cluster) newShard(db *pg.DB, id int64) *pg.DB {
 	name := "shard" + strconv.FormatInt(id, 10)
-	return db.WithParam("shard_id", id).
+	return db.
+		WithParam("shard_id", id).
 		WithParam("shard", pg.Safe(name)).
-		WithParam("epoch", cl.gen.epoch)
+		WithParam("epoch", cl.gen.epoch).
+		WithParam("SHARD_ID", id).
+		WithParam("SHARD", pg.Safe(name)).
+		WithParam("EPOCH", cl.gen.epoch)
 }
 
 func (cl *Cluster) Close() error {

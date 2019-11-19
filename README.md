@@ -26,7 +26,7 @@ import (
 // Users are sharded by AccountId, i.e. users with same account id are
 // placed on the same shard.
 type User struct {
-	tableName string `pg:"?shard.users"`
+	tableName string `pg:"?SHARD.users"`
 
 	Id        int64
 	AccountId int64
@@ -60,10 +60,10 @@ func GetUsers(cluster *sharding.Cluster, accountId int64) ([]User, error) {
 // createShard creates database schema for a given shard.
 func createShard(shard *pg.DB) error {
 	queries := []string{
-		`DROP SCHEMA IF EXISTS ?shard CASCADE`,
-		`CREATE SCHEMA ?shard`,
+		`DROP SCHEMA IF EXISTS ?SHARD CASCADE`,
+		`CREATE SCHEMA ?SHARD`,
 		sqlFuncs,
-		`CREATE TABLE ?shard.users (id bigint DEFAULT ?shard.next_id(), account_id int, name text, emails jsonb)`,
+		`CREATE TABLE ?SHARD.users (id bigint DEFAULT ?SHARD.next_id(), account_id int, name text, emails jsonb)`,
 	}
 
 	for _, q := range queries {
@@ -152,7 +152,7 @@ DECLARE
 BEGIN
   shard_id := shard_id % max_shard_id;
   seq_id := seq_id % max_seq_id;
-  id := (floor(extract(epoch FROM tm) * 1000)::bigint - ?epoch) << 23;
+  id := (floor(extract(epoch FROM tm) * 1000)::bigint - ?EPOCH) << 23;
   id := id | (shard_id << 12);
   id := id | seq_id;
   RETURN id;
@@ -160,15 +160,15 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE FUNCTION ?shard.make_id(tm timestamptz, seq_id bigint)
+CREATE FUNCTION ?SHARD.make_id(tm timestamptz, seq_id bigint)
 RETURNS bigint AS $$
 BEGIN
-   RETURN public.make_id(tm, seq_id, ?shard_id);
+   RETURN public.make_id(tm, seq_id, ?SHARD_ID);
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE SEQUENCE ?shard.id_seq;
+CREATE SEQUENCE ?SHARD.id_seq;
 `
 ```
 
