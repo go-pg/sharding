@@ -85,6 +85,10 @@ func (cl *Cluster) init() {
 	}
 }
 
+func (cl *Cluster) IDGen() *IDGen {
+	return cl.gen
+}
+
 func (cl *Cluster) newShard(db *pg.DB, id int64) *pg.DB {
 	name := "shard" + strconv.FormatInt(id, 10)
 	return db.
