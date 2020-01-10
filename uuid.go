@@ -141,11 +141,15 @@ func (u UUID) MarshalBinary() ([]byte, error) {
 var _ encoding.BinaryUnmarshaler = (*UUID)(nil)
 
 func (u *UUID) UnmarshalBinary(b []byte) error {
-	if len(b) != uuidLen {
-		return fmt.Errorf("sharding: invalid UUID: %q", b)
+	switch len(b) {
+	case uuidLen:
+		copy(u[:], b)
+		return nil
+	case uuidHexLen - 4:
+		_, err := hex.Decode(u[:], b)
+		return err
 	}
-	copy(u[:], b)
-	return nil
+	return fmt.Errorf("sharding: invalid UUID: %q", b)
 }
 
 var _ encoding.TextMarshaler = (*UUID)(nil)
