@@ -3,9 +3,9 @@ package sharding_test
 import (
 	"fmt"
 
-	"github.com/go-pg/sharding/v7"
+	"github.com/go-pg/sharding/v8"
 
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v10"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are
@@ -25,7 +25,8 @@ func (u User) String() string {
 
 // CreateUser picks shard by account id and creates user in the shard.
 func CreateUser(cluster *sharding.Cluster, user *User) error {
-	return cluster.Shard(user.AccountId).Insert(user)
+	_, err := cluster.Shard(user.AccountId).Model(user).Insert()
+	return err
 }
 
 // GetUser splits shard from user id and fetches user from the shard.

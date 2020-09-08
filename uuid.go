@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-pg/pg/v9/types"
+	"github.com/go-pg/pg/v10/types"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-pg/sharding/v7"
+	"github.com/go-pg/sharding/v8"
 )
 
 func TestMinIdMaxId(t *testing.T) {
@@ -27,7 +27,7 @@ func TestMinIdMaxId(t *testing.T) {
 func TestNextTime(t *testing.T) {
 	minTime := time.Date(1975, time.February, 28, 4, 6, 12, 224000000, time.UTC)
 
-	var tests = []struct {
+	tests := []struct {
 		tm       time.Time
 		wantedId int64
 	}{
@@ -69,7 +69,7 @@ func TestNextTimeBounds(t *testing.T) {
 	gen := sharding.NewShardIDGen(2049, nil)
 	prev := int64(math.MinInt64)
 	for i := 1976; i <= 2044; i++ {
-		tm := time.Date(i, time.January, 01, 0, 0, 0, 0, time.UTC)
+		tm := time.Date(i, time.January, 0o1, 0, 0, 0, 0, time.UTC)
 		next := gen.NextID(tm)
 		if next <= prev {
 			t.Errorf("%s: next=%d, prev=%d", tm, next, prev)

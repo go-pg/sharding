@@ -1,4 +1,8 @@
-# PostgreSQL sharding for go-pg and Golang [![Build Status](https://travis-ci.org/go-pg/sharding.svg)](https://travis-ci.org/go-pg/sharding)
+# PostgreSQL sharding for go-pg and Golang
+
+[![Build Status](https://travis-ci.org/go-pg/sharding.svg)](https://travis-ci.org/go-pg/sharding)
+
+> :heart: [**Uptrace.dev** - distributed traces, logs, and errors in one place](https://uptrace.dev)
 
 This package uses a [go-pg PostgreSQL client](https://github.com/go-pg/pg) to help sharding your data across a set of PostgreSQL servers as described in [Sharding & IDs at Instagram](http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram). In 2 words it maps many (2048-8192) logical shards implemented using PostgreSQL schemas to far fewer physical PostgreSQL servers.
 
@@ -9,7 +13,7 @@ Examples: http://godoc.org/github.com/go-pg/sharding#pkg-examples.
 
 This package requires [Go modules](https://github.com/golang/go/wiki/Modules) support:
 
-    go get github.com/go-pg/sharding/v7
+    go get github.com/go-pg/sharding/v8
 
 ## Quickstart
 
@@ -19,8 +23,8 @@ package sharding_test
 import (
 	"fmt"
 
-	"github.com/go-pg/sharding/v7"
-	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/sharding/v8"
+	"github.com/go-pg/pg/v10"
 )
 
 // Users are sharded by AccountId, i.e. users with same account id are

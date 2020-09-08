@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-pg/sharding/v7"
+	"github.com/go-pg/sharding/v8"
 )
 
 func TestUUIDParse(t *testing.T) {
